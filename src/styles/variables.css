@@ -1,0 +1,89 @@
+:root {
+
+  /* =========================
+     BALANCEBOARD COLORS
+  ========================= */
+
+  --primary-purple: #863bff;
+
+  --deep-violet: #7e14ff;
+
+  --soft-lilac: #b98bff;
+
+  --light-lilac: #efe6ff;
+
+  --light-background: #f8f5ff;
+
+  --white: #ffffff;
+
+  --ink: #241338;
+
+  --muted-text: #6f5f8c;
+
+
+  /* =========================
+     TYPOGRAPHY
+  ========================= */
+
+  --font-heading: "Sora", sans-serif;
+
+  --font-body: "Inter", sans-serif;
+
+
+  /* =========================
+     LAYOUT
+  ========================= */
+
+  --max-width: 1200px;
+
+
+  /* =========================
+     BORDER RADIUS
+  ========================= */
+
+  --radius-small: 8px;
+
+  --radius-medium: 16px;
+
+  --radius-large: 24px;
+
+  --radius-circle: 50%;
+
+
+  /* =========================
+     SPACING
+  ========================= */
+
+  --spacing-xs: 4px;
+
+  --spacing-sm: 8px;
+
+  --spacing-md: 16px;
+
+  --spacing-lg: 24px;
+
+  --spacing-xl: 32px;
+
+  --spacing-xxl: 48px;
+
+
+  /* =========================
+     SHADOWS
+  ========================= */
+
+  --shadow-small:
+    0 4px 12px rgba(36, 19, 56, 0.08);
+
+  --shadow-medium:
+    0 10px 30px rgba(36, 19, 56, 0.12);
+
+
+  /* =========================
+     TRANSITIONS
+  ========================= */
+
+  --transition-fast: 0.2s ease;
+
+  --transition-normal: 0.3s ease;
+
+}

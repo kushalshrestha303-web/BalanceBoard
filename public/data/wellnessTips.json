@@ -1,0 +1,20 @@
+[
+  {
+    "id": 1,
+    "category": "study",
+    "title": "Study in small steps",
+    "message": "Break large tasks into smaller, manageable actions."
+  },
+  {
+    "id": 2,
+    "category": "sleep",
+    "title": "Protect your sleep",
+    "message": "A consistent sleep routine can support concentration and wellbeing."
+  },
+  {
+    "id": 3,
+    "category": "hydration",
+    "title": "Stay hydrated",
+    "message": "Keep water nearby while studying."
+  }
+]

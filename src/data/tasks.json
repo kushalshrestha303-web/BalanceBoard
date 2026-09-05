@@ -1,0 +1,16 @@
+[
+  {
+    "id": 1,
+    "title": "Complete React component practice",
+    "category": "Study",
+    "completed": false,
+    "date": "2026-09-02"
+  },
+  {
+    "id": 2,
+    "title": "Review JavaScript concepts",
+    "category": "Study",
+    "completed": true,
+    "date": "2026-09-02"
+  }
+]

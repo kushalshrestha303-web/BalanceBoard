@@ -1,0 +1,16 @@
+[
+  {
+    "id": 1,
+    "title": "First Step",
+    "description": "Complete your first task",
+    "icon": "🌱",
+    "unlocked": false
+  },
+  {
+    "id": 2,
+    "title": "Focus Starter",
+    "description": "Complete one focus session",
+    "icon": "🎯",
+    "unlocked": false
+  }
+]
