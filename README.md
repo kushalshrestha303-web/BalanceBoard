@@ -682,6 +682,25 @@ https://github.com/kushalshrestha303-web/BalanceBoard
 
 ---
 
+## ◇ Testing and Quality Assurance
+
+Manual testing was performed to verify the main functions, usability and responsiveness of BalanceBoard.
+
+The following areas were reviewed:
+
+* Navigation between Dashboard, Analytics, Calendar and Achievements
+* Study task creation and completion
+* Exercise, mood and hydration tracking
+* Balance Score and achievement progress
+* Form validation and user feedback
+* Desktop and mobile responsiveness
+* Accessibility, including labels, colour contrast and keyboard navigation
+* Production build and deployment readiness
+
+The testing process helped identify features that worked correctly and areas requiring further improvement. Any issues found were communicated to the development team for review and correction.
+
+**Testing and documentation contributor:** Sushmita Pantha
+
 # ◈ Team Collaboration
 
 BalanceBoard was developed collaboratively for **ICT 930 – Advanced Web Application Development**.
