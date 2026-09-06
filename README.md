@@ -751,9 +751,9 @@ BalanceBoard demonstrates the practical implementation of:
 
 | Team Member | Role |
 |---|---|
-| ADD NAME | ADD ROLE |
-| ADD NAME | ADD ROLE |
-| ADD NAME | ADD ROLE |
+| Kushal Shrestha | React/state Developer |
+| Dev Kaji Gurung | Frontend/UI developer |
+| Sushmita Pantha | Testing/documentation/Feature developer |
 
 ---
 
