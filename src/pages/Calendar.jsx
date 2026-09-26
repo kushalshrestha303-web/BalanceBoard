@@ -42,6 +42,8 @@ function Calendar() {
   );
 
   const [showModal, setShowModal] = useState(false);
+  const [saving,setSaving]=useState(false);
+  const [saveError,setSaveError]=useState('');
   const [editingSession, setEditingSession] = useState(null);
 
   const [formData, setFormData] = useState({
@@ -148,8 +150,10 @@ function Calendar() {
     }));
   }
 
-  function handleSubmit(event) {
+  async function handleSubmit(event) {
     event.preventDefault();
+    if(saving) return;
+    setSaveError('');
 
     const cleanTitle = formData.title.trim();
     if (!cleanTitle || !formData.date) return;
@@ -163,15 +167,19 @@ function Calendar() {
         : null,
     };
 
+    setSaving(true);
+    try {
     if (editingSession) {
-      updateScheduledSession(editingSession.id, payload);
+      await updateScheduledSession(editingSession.id, payload);
     } else {
-      addScheduledSession(payload);
+      await addScheduledSession(payload);
     }
 
     setSelectedDate(formData.date);
     setShowModal(false);
     setEditingSession(null);
+    } catch(e) {setSaveError(e.message);} finally {setSaving(false);}
+
   }
 
   return (
@@ -394,6 +402,7 @@ function Calendar() {
               className="task-modal calendar-session-modal"
               onSubmit={handleSubmit}
             >
+              {saveError && <p role="alert" className="timer-error">{saveError}</p>}
               <div className="modal-header">
                 <div>
                   <p className="page-eyebrow">
@@ -536,7 +545,7 @@ function Calendar() {
                   Cancel
                 </button>
 
-                <button type="submit" className="primary-button">
+                <button type="submit" disabled={saving} className="primary-button">
                   {editingSession ? "Save Changes" : "Schedule Session"}
                 </button>
               </div>

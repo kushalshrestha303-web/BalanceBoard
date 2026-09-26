@@ -3,7 +3,9 @@ import ReactDOM from "react-dom/client";
 import { BrowserRouter } from "react-router-dom";
 
 import App from "./App";
+import { AuthProvider } from "./context/AuthContext";
 import { DashboardProvider } from "./context/DashboardContext";
+import { TimerProvider } from "./context/TimerContext";
 
 import "./styles/global.css";
 
@@ -12,9 +14,11 @@ ReactDOM.createRoot(
 ).render(
   <React.StrictMode>
     <BrowserRouter>
-      <DashboardProvider>
-        <App />
+      <AuthProvider>
+        <DashboardProvider>
+          <TimerProvider><App /></TimerProvider>
       </DashboardProvider>
+      </AuthProvider>
     </BrowserRouter>
   </React.StrictMode>
 );

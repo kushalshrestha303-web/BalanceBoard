@@ -12,6 +12,7 @@ function AddExercise({ onClose }) {
   });
 
   const [error, setError] = useState("");
+  const [saving, setSaving] = useState(false);
 
   function handleChange(event) {
     const { name, value } = event.target;
@@ -22,8 +23,9 @@ function AddExercise({ onClose }) {
     }));
   }
 
-  function handleSubmit(event) {
+  async function handleSubmit(event) {
     event.preventDefault();
+    if (saving) return;
 
     if (!formData.title.trim()) {
       setError("Please enter an exercise name.");
@@ -37,7 +39,9 @@ function AddExercise({ onClose }) {
       return;
     }
 
-    addExercise({
+    setSaving(true);
+    try {
+    await addExercise({
       title: formData.title,
       category: formData.category,
       description: formData.description,
@@ -47,6 +51,7 @@ function AddExercise({ onClose }) {
     });
 
     onClose();
+    } catch(e) { setError(e.message); } finally { setSaving(false); }
   }
 
   return (
@@ -181,6 +186,7 @@ function AddExercise({ onClose }) {
 
             <button
               type="submit"
+            disabled={saving}
               className="primary-button"
             >
               Add Exercise

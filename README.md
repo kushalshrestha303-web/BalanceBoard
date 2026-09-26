@@ -1,783 +1,99 @@
-# ◉ BalanceBoard
+# BalanceBoard · Full-stack application
 
-### Study. Move. Reflect. Balance.
+Study, exercise, calendar, mood, hydration, analytics and achievements for student wellbeing. Built from the original ICT930 React frontend with a persistent Express/SQLite backend.
 
-BalanceBoard is a responsive **student productivity and wellbeing web application** built with React.
+For a public HTTPS deployment where anyone with a Google account can sign in, follow [DEPLOY.md](DEPLOY.md). The local SQLite database needs persistent hosting storage.
 
-It brings study planning, focus sessions, physical activity, mood, hydration, scheduling, analytics, and achievements together in one calm and easy-to-use interface.
+## Run locally
 
-> **One dashboard for a more balanced student life.**
-
----
-
-## ◈ About BalanceBoard
-
-University students often need to manage more than assignments and deadlines.
-
-Study, exercise, hydration, mental wellbeing, scheduling, and productivity all contribute to a student's daily routine, but these activities are often managed using separate applications.
-
-**BalanceBoard** was designed to bring these areas together.
-
-The application helps students:
-
-- Organise study tasks
-- Complete focused study sessions
-- Track exercise activities
-- Schedule study and exercise sessions
-- Record their daily mood
-- Monitor hydration
-- Analyse their progress
-- Maintain a healthy Balance Score
-- Unlock achievements
-- Build positive habits through XP and levels
-
-The goal is not simply to increase productivity.
-
-The goal is to help students maintain a better **balance between academic progress and personal wellbeing**.
-
----
-
-## ✦ Core Features
-
-### ◉ Personal Dashboard
-
-The Dashboard is the central workspace of BalanceBoard.
-
-It provides a quick overview of the user's:
-
-- Study tasks
-- Exercise activities
-- Focus time
-- Exercise time
-- Current streak
-- Balance Score
-- Scheduled sessions
-- Mood
-- Hydration progress
-
-Changes made throughout the application are reflected dynamically in the Dashboard.
-
----
-
-### ◻ Study Task Management
-
-Students can create and manage their study activities from one location.
-
-Each task can contain information such as:
-
-- Task title
-- Description
-- Category
-- Required focus time
-- Completed focus time
-- Completion status
-
-Users can:
-
-- Add tasks
-- Complete tasks
-- Delete tasks
-- Monitor task progress
-- Start focus sessions
-
-This provides a simple workflow from planning to completion.
-
----
-
-### ◷ Focus Timer
-
-BalanceBoard includes an integrated Focus Timer.
-
-Students can start focused sessions directly from study tasks or scheduled activities.
-
-When a session is completed, the associated activity progress is updated.
-
-```text
-Task
-  ↓
-Start Focus
-  ↓
-Focus Timer
-  ↓
-Complete Session
-  ↓
-Progress Updated
-```
-
-This information can then contribute to Dashboard statistics, Analytics, Balance Score, and Achievements.
-
----
-
-### ◇ Exercise Tracking
-
-BalanceBoard encourages students to balance academic work with physical activity.
-
-Users can:
-
-- Create exercise activities
-- Set exercise duration
-- Start exercise focus sessions
-- Monitor exercise progress
-- Complete activities
-- Delete activities
-
-Study and exercise use a consistent card-based interface to keep the experience simple and familiar.
-
----
-
-### ◫ Smart Scheduling Calendar
-
-The interactive Calendar helps students plan their study and exercise sessions.
-
-Users can:
-
-- Navigate between months
-- Select dates
-- Schedule sessions
-- Choose Study or Exercise
-- Set a start time
-- Set session duration
-- Link sessions to activities
-- Edit scheduled sessions
-- Delete scheduled sessions
-- View a daily agenda
-
-Calendar sessions are connected with other parts of BalanceBoard.
-
-```text
-Calendar
-   ↓
-Scheduled Session
-   ↓
-Dashboard
-   ↓
-Focus Session
-   ↓
-Progress
-```
-
-This allows planning and activity tracking to work together rather than existing as separate features.
-
----
-
-## ♡ Daily Wellness
-
-BalanceBoard includes simple wellness tools alongside productivity features.
-
-### Mood Tracker
-
-Students can record how they are feeling using five mood options:
-
-```text
-😄 Great
-🙂 Good
-😐 Okay
-😕 Low
-😣 Stressed
-```
-
-The selected mood contributes to the user's daily Balance Score.
-
----
-
-### Water Tracker
-
-The Water Tracker provides a simple way to monitor daily hydration.
-
-Users can:
-
-- Add water
-- Remove water
-- View cups consumed
-- View hydration progress
-- View remaining cups
-- Receive simple hydration feedback
-
-BalanceBoard uses **8 cups as a simple in-app tracking goal**. Individual hydration requirements may vary.
-
----
-
-## ◎ Balance Score
-
-One of the main concepts behind BalanceBoard is the **Balance Score**.
-
-Instead of measuring only academic productivity, the application considers four areas:
-
-```text
-             BALANCE SCORE
-                  100
-                   │
-        ┌──────────┼──────────┐
-        │          │          │
-      Study     Exercise    Wellness
-      25 pts     25 pts       │
-                           ┌───┴───┐
-                           │       │
-                         Mood    Water
-                        25 pts   25 pts
-```
-
-The maximum score is:
-
-```text
-Study       25
-Exercise    25
-Mood        25
-Water       25
-────────────────
-Total      100
-```
-
-The purpose of this score is to encourage students to consider both **productivity and wellbeing**.
-
----
-
-## ◔ Analytics
-
-The Analytics page transforms application activity into understandable progress information.
-
-It uses shared BalanceBoard data such as:
-
-- Completed study tasks
-- Completed exercises
-- Study focus time
-- Exercise time
-- Balance Score
-- Current streak
-- Study progress
-- Exercise progress
-
-The Analytics interface is designed to help students quickly understand their activity rather than presenting unnecessary information.
-
----
-
-## ★ Achievements
-
-BalanceBoard includes a gamification system that rewards positive habits.
-
-Achievements are divided into categories such as:
-
-- Study
-- Fitness
-- Wellness
-- Planning
-- Balance
-- Streak
-
-Examples include:
-
-| Achievement | Goal |
-|---|---|
-| First Step | Complete your first study task |
-| Study Starter | Complete 5 study tasks |
-| Focus Apprentice | Reach 60 minutes of focus |
-| Deep Worker | Reach 300 minutes of focus |
-| Focus Master | Reach 600 minutes of focus |
-| Get Moving | Complete your first exercise |
-| Active Five | Complete 5 exercises |
-| Fitness Builder | Reach 120 exercise minutes |
-| Hydration Starter | Start tracking water |
-| Hydration Hero | Reach the hydration goal |
-| Check In | Record your mood |
-| Planner | Schedule a session |
-| Plan & Execute | Complete scheduled sessions |
-| Finding Balance | Reach a 50% Balance Score |
-| Balanced Day | Reach an 80% Balance Score |
-| Perfect Balance | Reach a 100% Balance Score |
-| Getting Consistent | Build a 3-day streak |
-| Week Warrior | Build a 7-day streak |
-
-Locked achievements show progress towards their goal.
-
----
-
-## ✦ XP & Level System
-
-Achievements award XP.
-
-As users unlock achievements, their total XP increases and allows them to progress through BalanceBoard levels.
-
-```text
-🌱 Getting Started
-        ↓
-📚 Habit Builder
-        ↓
-🎯 Focused Learner
-        ↓
-⚖️ Balanced Learner
-        ↓
-🔥 Momentum Maker
-        ↓
-💎 Balance Master
-```
-
-This provides additional motivation while keeping the focus on healthy and productive habits.
-
----
-
-# ◈ Technology Stack
-
-BalanceBoard was developed using modern frontend technologies.
-
-| Technology | Purpose |
-|---|---|
-| React | Component-based user interface |
-| JavaScript | Application logic |
-| Vite | Development and build tooling |
-| React Router | Client-side routing |
-| Context API | Shared state management |
-| React Hooks | Component state and lifecycle |
-| HTML5 | Semantic page structure |
-| CSS3 | Styling and responsive design |
-| Local Storage | Client-side persistence |
-| JSON | Mock application data |
-| Git | Version control |
-| GitHub | Team collaboration and repository hosting |
-| Vercel | Production deployment |
-
----
-
-# ◫ Application Architecture
-
-BalanceBoard follows a component-based frontend architecture.
-
-```text
-                         BalanceBoard
-                              │
-                              ▼
-                         React Router
-                              │
-                              ▼
-                       Shared Layout
-                              │
-                              ▼
-                     DashboardContext
-                              │
-          ┌───────────────────┼──────────────────┐
-          │                   │                  │
-          ▼                   ▼                  ▼
-        Study              Exercise           Wellness
-        Tasks              Activities       Mood + Water
-          │                   │                  │
-          └───────────────────┼──────────────────┘
-                              │
-                              ▼
-                           Calendar
-                              │
-                              ▼
-                          Dashboard
-                              │
-                    ┌─────────┴─────────┐
-                    ▼                   ▼
-                Analytics          Achievements
-                                   XP + Levels
-```
-
-The architecture separates application pages, reusable components, state management, services, data, and styling.
-
----
-
-## ◻ Project Structure
-
-```text
-src/
-│
-├── components/
-│   ├── common/
-│   ├── dashboard/
-│   ├── exercise/
-│   ├── layout/
-│   ├── tasks/
-│   └── wellness/
-│
-├── context/
-│   └── DashboardContext.jsx
-│
-├── data/
-│   ├── achievements.json
-│   └── tasks.json
-│
-├── pages/
-│   ├── Login.jsx
-│   ├── Dashboard.jsx
-│   ├── Analytics.jsx
-│   ├── Calendar.jsx
-│   ├── Achievements.jsx
-│   └── NotFound.jsx
-│
-├── services/
-│   └── dashboardService.js
-│
-├── styles/
-│   ├── global.css
-│   └── variables.css
-│
-├── App.jsx
-└── main.jsx
-```
-
----
-
-## ◇ Reusable Component Design
-
-BalanceBoard uses reusable components to reduce duplicated code and improve maintainability.
-
-Examples include:
-
-```text
-Layout
-Navigation
-TaskCard
-AddTask
-ExerciseCard
-AddExercise
-FocusTimer
-MoodTracker
-WaterTracker
-Button
-Card
-Loading
-ErrorMessage
-EmptyState
-```
-
-Pages combine these smaller components to create complete application views.
-
-This approach makes the application easier to understand, maintain, test, and extend.
-
----
-
-## ◎ State Management
-
-Shared application state is managed using the **React Context API**.
-
-`DashboardContext` provides common data and functions to components throughout BalanceBoard.
-
-Shared state includes:
-
-```text
-Study Tasks
-Exercise Activities
-Wellness
-Scheduled Sessions
-Statistics
-Streak
-```
-
-This allows multiple pages to use the same source of data.
-
-For example:
-
-```text
-Mood Tracker
-     │
-     ▼
-DashboardContext
-     │
-     ├──────► Dashboard
-     │
-     ├──────► Analytics
-     │
-     └──────► Achievements
-```
-
-This reduces duplicated state and creates a more connected application.
-
----
-
-## ◉ Client-Side Routing
-
-BalanceBoard uses **React Router** for multi-view navigation.
-
-| Route | Page |
-|---|---|
-| `/` | Login |
-| `/dashboard` | Dashboard |
-| `/analytics` | Analytics |
-| `/calendar` | Calendar |
-| `/achievements` | Achievements |
-| `*` | Not Found |
-
-A shared `Layout` and `Navigation` component provides a consistent experience across the main pages.
-
----
-
-## ◌ Data Handling
-
-The application demonstrates frontend data handling through:
-
-- JSON/mock data
-- Asynchronous data loading
-- React state
-- Context state
-- Loading states
-- Error states
-- Dynamic UI updates
-- Local Storage
-
-The frontend architecture can later be extended to communicate with a backend API and database.
-
----
-
-## ✦ User Interaction
-
-BalanceBoard contains a range of interactive functionality, including:
-
-- Forms
-- Form validation
-- Add actions
-- Delete actions
-- Completion controls
-- Focus timers
-- Calendar scheduling
-- Calendar editing
-- Calendar filtering
-- Mood selection
-- Hydration controls
-- Achievement filtering
-- Progress indicators
-- Modals
-- Navigation
-
-React state allows the interface to respond immediately to user actions.
-
----
-
-# ♿ Accessibility
-
-Accessibility was considered throughout the frontend design.
-
-The application uses:
-
-- Semantic HTML
-- Clear heading hierarchy
-- Form labels
-- Native buttons and inputs
-- Accessible navigation
-- `aria-label` attributes where appropriate
-- `aria-pressed` for selectable controls
-- Progress accessibility attributes
-- Keyboard-accessible controls
-- Clear visual states
-- Readable text contrast
-- Consistent interaction patterns
-
----
-
-# ◐ Responsive Design
-
-BalanceBoard was designed for both desktop and smaller screens.
-
-Responsive CSS adapts:
-
-- Navigation
-- Dashboard
-- Statistics
-- Task cards
-- Exercise cards
-- Calendar
-- Analytics
-- Achievement cards
-- Mood Tracker
-- Water Tracker
-
-The responsive design allows students to access important functionality across different device sizes.
-
----
-
-# ✦ UI / UX Design
-
-BalanceBoard follows a **calm, clean and student-friendly visual design**.
-
-The visual language uses:
-
-- Purple and soft lilac as primary colours
-- White and soft background surfaces
-- Rounded cards
-- Subtle borders and shadows
-- Clear typography
-- Consistent spacing
-- Progress indicators
-- Simple icons
-- Clear selected and completed states
-
-The interface was designed to present useful information without making the student experience feel unnecessarily complex or overwhelming.
-
----
-
-# ⚙ Installation
-
-## Requirements
-
-Before running BalanceBoard, install:
-
-- Node.js
-- npm
-
----
-
-## Clone the Repository
+Requires **Node.js 22.13+** and npm. In this folder:
 
 ```bash
-git clone https://github.com/kushalshrestha303-web/BalanceBoard.git
-```
-
-Enter the project:
-
-```bash
-cd BalanceBoard
-```
-
-Install dependencies:
-
-```bash
-npm install
-```
-
-Start the development server:
-
-```bash
+npm ci
+npm ci --prefix server
 npm run dev
 ```
 
-Vite will display a local URL, usually:
+Open **http://localhost:5173**. The command starts Vite and the API on port 3001. Create an account with a 12+ character password; your work is saved to `server/data/balanceboard.sqlite` and remains after a restart. Accounts have separate data. No database service, API key, or `.env` is required.
 
-```text
-http://localhost:5173/
-```
+### Enable Google sign-in
 
----
+Password sign-in works immediately. To enable the Google button:
 
-# ⚙ Production Build
+1. In [Google Cloud Console](https://console.cloud.google.com/apis/credentials), configure the OAuth consent screen and create an **OAuth client ID** of type **Web application**. Choose External for accounts outside your organization; see DEPLOY.md for public access settings.
+2. Add **`http://localhost:5173/api/auth/google/callback`** as an authorized redirect URI. Use **`http://localhost:5173`** as an authorized JavaScript origin if requested.
+3. Copy `.env.example` to `.env` in this project folder. Put your real `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET` into `.env`; keep `APP_ORIGIN=http://localhost:5173` for development.
+4. Restart `npm run dev`, open **http://localhost:5173/login**, and choose **Continue with Google**. The button is disabled until configuration is present. Never commit `.env` or share your client secret.
 
-Create the production build:
+Google sign-in uses the authorization-code flow with state, nonce and PKCE; the backend verifies Google's signed identity token and creates a local session. Google accounts are separate from password accounts even if the email address happens to match. When using `npm start` on port 3001, use `APP_ORIGIN=http://localhost:3001` and register **`http://localhost:3001/api/auth/google/callback`** instead. For a public deployment, use your HTTPS site origin and corresponding HTTPS callback URI. Google sign-in requires the backend to reach Google's OAuth and certificate endpoints.
+
+To build and run from one production server:
 
 ```bash
 npm run build
+npm start
 ```
 
-Preview the production build:
+Open **http://localhost:3001**. Change `PORT` if port 3001 is busy. Set `DB_PATH` to an absolute path to relocate the database. Use HTTPS when deploying publicly so session cookies use the Secure attribute. Back up the SQLite database file to retain accounts and activity. Do not upload the database or `node_modules` to Git.
+
+## How it works
+
+- Register or sign in with a password or a configured Google account. Passwords are hashed with scrypt and a unique salt. Sessions use a random token in an HttpOnly, SameSite=Strict cookie. The database stores only a hash of each session token. Logout invalidates it.
+- The Pomodoro/exercise timer is shared across routes and stored per account in SQLite. Start it on Dashboard, then visit Calendar, Profile, Analytics or another page: a compact timer stays visible. Refreshing or reopening the app restores the same deadline. It continues while you are signed out or the browser is closed; use Pause to stop counting. At zero, choose Save progress to credit elapsed time once. Reset and Discard intentionally remove unsaved elapsed time. Only one timer is active per account; other tabs sync within 15 seconds or when focused. The timer is not a background alarm service.
+- Add study tasks and exercise items; track time, complete or delete them. All mutations are checked and scoped to the signed-in account.
+- Schedule or edit calendar sessions. A new standalone session creates a linked task or exercise. A linked session refers only to an item in your account. Deleted items are unlinked from calendar sessions.
+- Mood and water are saved per local calendar day. The activity streak uses days on which activity was recorded. The existing analytics and achievements use the persisted dashboard data.
+- Upcoming sessions show a configurable reminder banner (0, 5, 10, or 30 minutes before start). The app does not send email or background push notifications.
+- Click your profile avatar/name to edit your display name and optional email, inspect account details, change a local password, and save per-account alarm settings. Profile email is not verified and is never used for delivery.
+- At a scheduled session's start, the authenticated alarm endpoint returns only that user's due sessions. While BalanceBoard is open, the page shows an alarm, attempts a short ringtone and vibration when enabled and supported, and can show a desktop notification with browser permission. Click **Test ringtone & vibration** in Profile to allow browser audio. The browser may throttle an inactive tab; the app cannot guarantee an alarm after the tab/browser is closed or the device is asleep.
+
+## API
+
+`GET /api/health`, `/api/auth/providers`, `/api/auth/google`, `/api/auth/google/callback`; `POST /api/auth/register`, `/api/auth/login`, `/api/auth/logout`; `GET /api/auth/me`, `/api/profile`, `/api/alarms/due?day=YYYY-MM-DD&time=HH:mm`, `/api/dashboard?day=YYYY-MM-DD`; `PATCH /api/profile`, `/api/profile/password`; `POST /api/actions`; `GET /api/timer`, `PUT /api/timer`, `POST /api/timer/actions`. Protected endpoints require the session cookie. `POST /api/actions` accepts `{ "type": "task.add", "payload": { "title": "Study", "focusMinutes": 25 } }` and typed task, exercise, wellness and session actions implemented in `server/src/server.js`.
+
+## Verify
 
 ```bash
-npm run preview
+npm run build
+npm test
 ```
 
----
+The API test covers registration through the development origin, rejection of unrelated origins, profile persistence and validation, password change, due alarms and user isolation, logout, and a mocked Google OAuth exchange with a signed ID token. The timer integration test restarts the actual API process against the same database and checks deadline recovery, pause/resume, account isolation, stale-tab conflicts, completion and duplicate-save rejection. The build and both API suites pass. Browser navigation could not be tested in the remote browser because access to the local app was blocked. Live Google sign-in still requires your own OAuth client credentials. In the browser, create an account, add a task and calendar session for the next minute, open Profile to test sound/vibration and allow notifications, then keep the app open until the session starts. Refresh, sign out and sign back in to check persistence.
 
-# ◉ Live Application
+### Check the timer in your browser
 
-**BalanceBoard Live Demo**
+1. Add a two-minute study task; select **Focus**, then **Start / Resume**.
+2. Visit Calendar, Profile and Analytics. The compact timer should continue counting down.
+3. Refresh the page. It should restore the original deadline, without restarting at two minutes.
+4. Pause, navigate and refresh; the remaining time should stay unchanged. Resume it.
+5. At zero, select **Save progress**. The task should show its completed minutes once and the timer should clear.
+6. Sign into a different account; it should not see the first account's timer or activities.
 
-```text
-ADD_VERCEL_URL_HERE
-```
+The same checks apply to exercise timers. Deleting the activity also deletes its timer.
 
----
+## Deployment status
 
-# ◇ GitHub Repository
+This archive contains application code and setup instructions, not a live deployment or a guarantee of zero defects. Google credentials, public HTTPS hosting and a persistent disk must be configured by the owner. This SQLite version runs as a single server instance; it has not been load tested for a large public audience. Keep database backups and test restoration before relying on it for important data. Configure `NODE_ENV=production` and the exact `APP_ORIGIN` in hosting. If enabling `TRUST_PROXY=1`, ensure requests reach Node only through one trusted reverse proxy; this setting affects client-IP rate limiting.
 
-```text
-https://github.com/kushalshrestha303-web/BalanceBoard
-```
+## Project layout
 
----
+- `src/` — existing React views and components, authenticated routing and API-backed context.
+- `server/src/server.js` — Express routes, authentication, validation and SQLite schema.
+- `server/src/googleAuth.js` — Google ID-token signature and claim validation.
+- `src/pages/Profile.jsx` — account settings and alarm controls.
+- `src/components/layout/Reminders.jsx` — upcoming sessions and in-page alarm handling.
+- `server/src/server.test.js` and `server/src/timer.test.js` — API integration tests.
+- `server/src/timer.js` — persistent timer state and atomic progress saves.
+- `src/context/TimerContext.jsx` — shared timer state, deadline display and synchronization.
+- `server/data/` — database location created on first run; its files are ignored by Git.
+- `scripts/dev.js` — launches frontend and backend together.
 
-## ◇ Testing and Quality Assurance
+BalanceBoard was originally created for ICT930 Assignment 2 Frontend Design Overview. This version extends the supplied frontend into a local full-stack application; it does not claim deployment or an unprovided assessment rubric.
 
-Manual testing was performed to verify the main functions, usability and responsiveness of BalanceBoard.
+## Assessment 3 fit and submission gaps
 
-The following areas were reviewed:
+The supplied ICT930 Assessment 3 brief requests a React-style frontend with at least five views, responsive forms and routing, backend CRUD/API and validation, a persistent database, API-based state management, and authentication. This project demonstrates those features locally. It addresses student time and wellbeing, which is an **equivalent proposed domain** rather than one of the listed approved domains; seek tutor approval for that domain as the brief requires. SQLite is persistent and suitable for this local demonstration, but the report should justify its selection and describe how a deployed multi-user system would use a more scalable database.
 
-* Navigation between Dashboard, Analytics, Calendar and Achievements
-* Study task creation and completion
-* Exercise, mood and hydration tracking
-* Balance Score and achievement progress
-* Form validation and user feedback
-* Desktop and mobile responsiveness
-* Accessibility, including labels, colour contrast and keyboard navigation
-* Production build and deployment readiness
+The rubric unexpectedly assesses a *native app and sensor integration*, despite the detailed instructions calling for a web application. Browser vibration is an optional output capability, **not a sensor**. Confirm how the sensor criterion applies with the tutor; do not claim that the project meets it. The case study report (maximum five pages), architecture and data-flow diagrams, screenshots and testing evidence, repository/Git link, presentation slides, contribution statement and live team demonstration are separate submission requirements and are not contained in this source archive. No mark or HD outcome can be guaranteed from the code alone.
 
-The testing process helped identify features that worked correctly and areas requiring further improvement. Any issues found were communicated to the development team for review and correction.
-
-**Testing and documentation contributor:** Sushmita Pantha
-
-# ◈ Team Collaboration
-
-BalanceBoard was developed collaboratively for **ICT 930 – Advanced Web Application Development**.
-
-Git and GitHub are used for:
-
-- Version control
-- Team collaboration
-- Feature development
-- Code integration
-- Tracking changes
-- Maintaining project history
-- Recording individual contributions
-
-Each team member contributes to the development process through meaningful Git commits.
-
----
-
-# ◌ Future Improvements
-
-BalanceBoard currently focuses on frontend functionality.
-
-Future development could include:
-
-- Backend API integration
-- Database persistence
-- Secure authentication
-- User registration
-- Cloud user profiles
-- Google Calendar integration
-- Notifications and reminders
-- Long-term mood history
-- Long-term hydration history
-- Weekly and monthly historical analytics
-- Expanded achievement system
-- Personalised wellbeing recommendations
-
----
-
-# ◉ Assessment Information
-
-**Unit:** ICT 930 – Advanced Web Application Development  
-**Course:** MIT  
-**Semester:** Semester 2, 2026  
-**Assessment:** Assignment 2 – Frontend Design Overview
-
-BalanceBoard demonstrates the practical implementation of:
-
-- React functional components
-- React Hooks
-- Component architecture
-- Client-side routing
-- Shared and local state
-- Data handling
-- Asynchronous loading
-- Loading and error states
-- User interaction
-- Responsive design
-- Accessibility
-- Maintainable code structure
-- Version control
-- Professional frontend development practices
-
----
-
-# ◈ Team Members
-
-| Team Member | Role |
-|---|---|
-| Kushal Shrestha | React/state Developer |
-| Dev Kaji Gurung | Frontend/UI developer |
-| Sushmita Pantha | Testing/documentation/Feature developer |
-
----
-
-## ✦ Academic Project
-
-BalanceBoard was developed for educational purposes as part of **ICT 930 – Advanced Web Application Development**.
-
-**BalanceBoard ◉ — Study. Move. Reflect. Balance.**
+The attached brief also contains conflicting statements about permitted AI assistance, including a strict prohibition on AI-generated code/report/presentation; review those instructions and the declaration requirements before submitting any work based on this archive.

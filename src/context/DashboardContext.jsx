@@ -1,612 +1,71 @@
-import {
-  createContext,
-  useContext,
-  useEffect,
-  useMemo,
-  useState,
-} from "react";
-
-import { getDashboardData } from "../services/dashboardService";
-
-const DashboardContext = createContext();
-
+import { createContext, useContext, useEffect, useMemo, useRef, useState } from "react";
+import { api, localDay } from "../services/api";
+import { useAuth } from "./AuthContext";
+const DashboardContext = createContext(null);
 export function DashboardProvider({ children }) {
-  // =========================
-  // TASK STATE
-  // =========================
-
-  const [tasks, setTasks] = useState([]);
-
-  // =========================
-  // EXERCISE STATE
-  // =========================
-
-  const [exercises, setExercises] = useState([]);
-
-  // =========================
-  // WELLNESS STATE
-  // =========================
-
-  const [wellness, setWellness] = useState({
-    mood: "",
-    water: 0,
-  });
-
-  // =========================
-  // SCHEDULED SESSION STATE
-  // =========================
-
-  const [scheduledSessions, setScheduledSessions] = useState(() => {
-    try {
-      const savedSessions = localStorage.getItem(
-        "balanceboard-scheduled-sessions"
-      );
-
-      return savedSessions
-        ? JSON.parse(savedSessions)
-        : [];
-    } catch {
-      return [];
-    }
-  });
-
-  // =========================
-  // GENERAL STATE
-  // =========================
-
-  const [streak, setStreak] = useState(7);
-
-  const [loading, setLoading] = useState(true);
-
-  const [error, setError] = useState("");
-
-  // =========================
-  // LOAD DASHBOARD DATA
-  // =========================
-
+  const { user } = useAuth();
+  const [tasks,setTasks] = useState([]);
+  const [exercises,setExercises] = useState([]);
+  const [wellness,setWellness] = useState({mood:'',water:0});
+  const [scheduledSessions,setScheduledSessions] = useState([]);
+  const [streak,setStreak] = useState(0);
+  const [loading,setLoading] = useState(false);
+  const [error,setError] = useState('');
+  const queue = useRef(Promise.resolve());
+  const owner = useRef(user?.id);
+  owner.current = user?.id;
+  async function refresh() {
+    const actor = user?.id;
+    const data = await api(`/dashboard?day=${localDay()}`);
+    if (owner.current !== actor) return;
+    setTasks(data.tasks);
+    setExercises(data.exercises);
+    setWellness(data.wellness);
+    setScheduledSessions(data.scheduledSessions);
+    setStreak(data.streak);
+    setError('');
+  }
   useEffect(() => {
-    async function loadDashboard() {
-      try {
-        setLoading(true);
-        setError("");
-
-        const data = await getDashboardData();
-
-        // Load tasks
-        setTasks(
-          Array.isArray(data.tasks)
-            ? data.tasks
-            : []
-        );
-
-        // Load exercises
-        setExercises(
-          Array.isArray(data.exercises)
-            ? data.exercises
-            : []
-        );
-
-        // Load wellness
-        setWellness(
-          data.wellness || {
-            mood: "",
-            water: 0,
-          }
-        );
-
-        // Load streak
-        setStreak(
-          Number(data.streak) || 0
-        );
-      } catch (err) {
-        console.error(err);
-
-        setError(
-          "Unable to load dashboard data. Please try again."
-        );
-      } finally {
-        setLoading(false);
-      }
-    }
-
-    loadDashboard();
-  }, []);
-
-  // =========================
-  // SAVE SCHEDULED SESSIONS
-  // =========================
-
-  useEffect(() => {
-    localStorage.setItem(
-      "balanceboard-scheduled-sessions",
-      JSON.stringify(scheduledSessions)
-    );
-  }, [scheduledSessions]);
-
-  // =========================
-  // ADD TASK
-  // =========================
-
-  function addTask(taskData) {
-    const newTask = {
-      id: Date.now(),
-
-      title:
-        taskData.title?.trim() ||
-        "Untitled Task",
-
-      category:
-        taskData.category ||
-        "Study",
-
-      description:
-        taskData.description?.trim() ||
-        "",
-
-      focusMinutes:
-        Number(taskData.focusMinutes) > 0
-          ? Number(taskData.focusMinutes)
-          : Number(taskData.estimatedMinutes) > 0
-          ? Number(taskData.estimatedMinutes)
-          : 25,
-
-      completedFocusMinutes: 0,
-
-      completed: false,
-    };
-
-    setTasks((currentTasks) => [
-      ...currentTasks,
-      newTask,
-    ]);
-  }
-
-  // =========================
-  // DELETE TASK
-  // =========================
-
-  function deleteTask(taskId) {
-    setTasks((currentTasks) =>
-      currentTasks.filter(
-        (task) => task.id !== taskId
-      )
-    );
-  }
-
-  // =========================
-  // TOGGLE TASK COMPLETION
-  // =========================
-
-  function toggleTaskComplete(taskId) {
-    setTasks((currentTasks) =>
-      currentTasks.map((task) =>
-        task.id === taskId
-          ? {
-              ...task,
-              completed: !task.completed,
-            }
-          : task
-      )
-    );
-  }
-
-  // =========================
-  // ADD TASK FOCUS TIME
-  // =========================
-
-  function addFocusTime(taskId, minutes) {
-    const minutesToAdd =
-      Number(minutes) || 0;
-
-    if (minutesToAdd <= 0) {
+    if (!user) {
+      setTasks([]); setExercises([]); setWellness({mood:'',water:0}); setScheduledSessions([]); setStreak(0); setError('');
       return;
     }
-
-    setTasks((currentTasks) =>
-      currentTasks.map((task) => {
-        if (task.id !== taskId) {
-          return task;
-        }
-
-        const currentFocus =
-          Number(
-            task.completedFocusMinutes
-          ) || 0;
-
-        const targetFocus =
-          Number(task.focusMinutes) || 25;
-
-        const newFocus =
-          Math.min(
-            currentFocus + minutesToAdd,
-            targetFocus
-          );
-
-        return {
-          ...task,
-
-          completedFocusMinutes:
-            newFocus,
-
-          completed:
-            newFocus >= targetFocus
-              ? true
-              : task.completed,
-        };
-      })
-    );
+    let cancelled=false;
+    setLoading(true); setError('');
+    api(`/dashboard?day=${localDay()}`).then(data => {
+      if(cancelled) return;
+      setTasks(data.tasks); setExercises(data.exercises); setWellness(data.wellness);
+      setScheduledSessions(data.scheduledSessions); setStreak(data.streak);
+    }).catch(e => { if(!cancelled) setError(e.message); }).finally(()=>{if(!cancelled) setLoading(false);});
+    return () => {cancelled=true;};
+  },[user?.id]);
+  // Serialize mutations so rapid clicks cannot overwrite newer server state.
+  function action(type,payload={}) {
+    const actor=user?.id;
+    queue.current = queue.current.catch(()=>{}).then(async()=>{
+      if(!actor || owner.current!==actor) throw new Error('Account changed. Please try again.');
+      await api('/actions',{method:'POST',body:JSON.stringify({type,payload,clientDay:localDay()})});
+      if(owner.current!==actor) return;
+      await refresh(); setError('');
+    }).catch(e=>{if(owner.current===actor) setError(e.message); throw e;});
+    // Event handlers do not await actions; the visible error is retained in context.
+    queue.current.catch(()=>{});
+    return queue.current;
   }
-
-  // =========================
-  // ADD EXERCISE
-  // =========================
-
-  function addExercise(exerciseData) {
-    const newExercise = {
-      id: Date.now(),
-
-      title:
-        exerciseData.title?.trim() ||
-        "Untitled Exercise",
-
-      category:
-        exerciseData.category ||
-        "Exercise",
-
-      description:
-        exerciseData.description?.trim() ||
-        "",
-
-      exerciseMinutes:
-        Number(
-          exerciseData.exerciseMinutes
-        ) > 0
-          ? Number(
-              exerciseData.exerciseMinutes
-            )
-          : Number(
-              exerciseData.estimatedMinutes
-            ) > 0
-          ? Number(
-              exerciseData.estimatedMinutes
-            )
-          : 30,
-
-      completedExerciseMinutes: 0,
-
-      completed: false,
-    };
-
-    setExercises((currentExercises) => [
-      ...currentExercises,
-      newExercise,
-    ]);
-  }
-
-  // =========================
-  // DELETE EXERCISE
-  // =========================
-
-  function deleteExercise(exerciseId) {
-    setExercises((currentExercises) =>
-      currentExercises.filter(
-        (exercise) =>
-          exercise.id !== exerciseId
-      )
-    );
-  }
-
-  // =========================
-  // TOGGLE EXERCISE
-  // =========================
-
-  function toggleExerciseComplete(
-    exerciseId
-  ) {
-    setExercises((currentExercises) =>
-      currentExercises.map(
-        (exercise) =>
-          exercise.id === exerciseId
-            ? {
-                ...exercise,
-                completed:
-                  !exercise.completed,
-              }
-            : exercise
-      )
-    );
-  }
-
-  // =========================
-  // ADD EXERCISE TIME
-  // =========================
-
-  function addExerciseTime(
-    exerciseId,
-    minutes
-  ) {
-    const minutesToAdd =
-      Number(minutes) || 0;
-
-    if (minutesToAdd <= 0) {
-      return;
-    }
-
-    setExercises((currentExercises) =>
-      currentExercises.map(
-        (exercise) => {
-          if (
-            exercise.id !== exerciseId
-          ) {
-            return exercise;
-          }
-
-          const currentTime =
-            Number(
-              exercise.completedExerciseMinutes
-            ) || 0;
-
-          const targetTime =
-            Number(
-              exercise.exerciseMinutes
-            ) || 30;
-
-          const newTime =
-            Math.min(
-              currentTime + minutesToAdd,
-              targetTime
-            );
-
-          return {
-            ...exercise,
-
-            completedExerciseMinutes:
-              newTime,
-
-            completed:
-              newTime >= targetTime
-                ? true
-                : exercise.completed,
-          };
-        }
-      )
-    );
-  }
-
-  // =========================
-  // UPDATE MOOD
-  // =========================
-
-  function updateMood(mood) {
-    setWellness(
-      (currentWellness) => ({
-        ...currentWellness,
-        mood,
-      })
-    );
-  }
-
-  // =========================
-  // ADD WATER
-  // =========================
-
-  function addWater() {
-    setWellness(
-      (currentWellness) => ({
-        ...currentWellness,
-
-        water: Math.min(
-          (
-            Number(
-              currentWellness.water
-            ) || 0
-          ) + 1,
-          8
-        ),
-      })
-    );
-  }
-
-  // =========================
-  // REMOVE WATER
-  // =========================
-
-  function removeWater() {
-    setWellness(
-      (currentWellness) => ({
-        ...currentWellness,
-
-        water: Math.max(
-          (
-            Number(
-              currentWellness.water
-            ) || 0
-          ) - 1,
-          0
-        ),
-      })
-    );
-  }
-
-  // =========================
-  // SCHEDULE SESSION
-  // =========================
-
-  function addScheduledSession(sessionData) {
-    const sessionId = Date.now();
-
-    const type =
-      sessionData.type === "exercise"
-        ? "exercise"
-        : "study";
-
-    let linkedItemId =
-      sessionData.linkedItemId || null;
-
-    const title =
-      sessionData.title?.trim() ||
-      "Untitled Session";
-
-    const duration =
-      Number(sessionData.duration) > 0
-        ? Number(sessionData.duration)
-        : type === "exercise"
-        ? 30
-        : 25;
-
-    // If the calendar session is not linked to an
-    // existing task/exercise, automatically create one.
-    // This makes Calendar -> Dashboard update instantly.
-    if (!linkedItemId) {
-      linkedItemId = sessionId + 1;
-
-      if (type === "study") {
-        const newTask = {
-          id: linkedItemId,
-          title,
-          category: "Study",
-          description:
-            "Scheduled from BalanceBoard Calendar.",
-          focusMinutes: duration,
-          completedFocusMinutes: 0,
-          completed: false,
-          createdFromCalendar: true,
-        };
-
-        setTasks((currentTasks) => [
-          ...currentTasks,
-          newTask,
-        ]);
-      } else {
-        const newExercise = {
-          id: linkedItemId,
-          title,
-          category: "Exercise",
-          description:
-            "Scheduled from BalanceBoard Calendar.",
-          exerciseMinutes: duration,
-          completedExerciseMinutes: 0,
-          completed: false,
-          createdFromCalendar: true,
-        };
-
-        setExercises((currentExercises) => [
-          ...currentExercises,
-          newExercise,
-        ]);
-      }
-    }
-
-    const newSession = {
-      id: sessionId,
-      type,
-      title,
-      date: sessionData.date || "",
-      startTime:
-        sessionData.startTime || "09:00",
-      duration,
-      linkedItemId,
-      completed: false,
-    };
-
-    setScheduledSessions((currentSessions) =>
-      [...currentSessions, newSession].sort(
-        (a, b) =>
-          `${a.date}T${a.startTime}`.localeCompare(
-            `${b.date}T${b.startTime}`
-          )
-      )
-    );
-
-    return newSession;
-  }
-
-  function updateScheduledSession(sessionId, updates) {
-    const currentSession =
-      scheduledSessions.find(
-        (session) => session.id === sessionId
-      );
-
-    const nextType =
-      updates.type ||
-      currentSession?.type ||
-      "study";
-
-    const linkedItemId =
-      updates.linkedItemId ||
-      currentSession?.linkedItemId ||
-      null;
-
-    const nextTitle =
-      updates.title?.trim() ||
-      currentSession?.title ||
-      "Untitled Session";
-
-    const nextDuration =
-      Number(updates.duration) > 0
-        ? Number(updates.duration)
-        : Number(currentSession?.duration) ||
-          (nextType === "exercise" ? 30 : 25);
-
-    setScheduledSessions((currentSessions) =>
-      currentSessions
-        .map((session) =>
-          session.id === sessionId
-            ? {
-                ...session,
-                ...updates,
-                type: nextType,
-                title: nextTitle,
-                duration: nextDuration,
-                linkedItemId,
-              }
-            : session
-        )
-        .sort((a, b) =>
-          `${a.date}T${a.startTime}`.localeCompare(
-            `${b.date}T${b.startTime}`
-          )
-        )
-    );
-
-    // Keep the linked Dashboard card in sync.
-    if (linkedItemId) {
-      if (nextType === "study") {
-        setTasks((currentTasks) =>
-          currentTasks.map((task) =>
-            task.id === linkedItemId
-              ? {
-                  ...task,
-                  title: nextTitle,
-                  focusMinutes: nextDuration,
-                }
-              : task
-          )
-        );
-      } else {
-        setExercises((currentExercises) =>
-          currentExercises.map((exercise) =>
-            exercise.id === linkedItemId
-              ? {
-                  ...exercise,
-                  title: nextTitle,
-                  exerciseMinutes: nextDuration,
-                }
-              : exercise
-          )
-        );
-      }
-    }
-  }
-
-  function deleteScheduledSession(sessionId) {
-    setScheduledSessions((currentSessions) =>
-      currentSessions.filter(
-        (session) => session.id !== sessionId
-      )
-    );
-  }
-
+  function addTask(data) { return action('task.add',data); }
+  function deleteTask(id) { return action('task.delete',{id}); }
+  function toggleTaskComplete(id) { return action('task.toggle',{id}); }
+  function addFocusTime(id,minutes) { return action('task.time',{id,minutes}); }
+  function addExercise(data) { return action('exercise.add',data); }
+  function deleteExercise(id) { return action('exercise.delete',{id}); }
+  function toggleExerciseComplete(id) { return action('exercise.toggle',{id}); }
+  function addExerciseTime(id,minutes) { return action('exercise.time',{id,minutes}); }
+  function updateMood(mood) { return action('wellness.mood',{mood,day:localDay()}); }
+  function addWater() { return action('wellness.water',{delta:1,day:localDay()}); }
+  function removeWater() { return action('wellness.water',{delta:-1,day:localDay()}); }
+  function addScheduledSession(data) { return action('session.add',data); }
+  function updateScheduledSession(id,data) { return action('session.update',{id,...data}); }
+  function deleteScheduledSession(id) { return action('session.delete',{id}); }
   // =========================
   // DASHBOARD STATISTICS
   // =========================
@@ -819,6 +278,7 @@ export function DashboardProvider({ children }) {
   // =========================
 
   const value = {
+    refresh,
     // Data
     tasks,
 

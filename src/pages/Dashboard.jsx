@@ -1,4 +1,4 @@
- import { useState } from "react";
+import { useState } from "react";
 import { Link } from "react-router-dom";
 
 import Layout from "../components/layout/Layout";
@@ -11,19 +11,19 @@ import MoodTracker from "../components/wellness/MoodTracker";
 import WaterTracker from "../components/wellness/WaterTracker";
 
 import { useDashboard } from "../context/DashboardContext";
+import { useTimer } from "../context/TimerContext";
+import { useAuth } from "../context/AuthContext";
 
 function Dashboard() {
+  const { select } = useTimer();
+  const { user, profile } = useAuth();
   const {
     tasks,
     exercises,
     streak,
     loading,
-    error,
     statistics,
     scheduledSessions = [],
-    addFocusTime,
-    addExerciseTime,
-    updateScheduledSession,
   } = useDashboard();
 
   const [showTaskModal, setShowTaskModal] =
@@ -32,106 +32,10 @@ function Dashboard() {
   const [showExerciseModal, setShowExerciseModal] =
     useState(false);
 
-  // Stores either a study task or exercise
-  const [selectedSession, setSelectedSession] =
-    useState(null);
-
-  // =========================
-  // START STUDY FOCUS
-  // =========================
-
-  function handleStartFocus(task) {
-    setSelectedSession({
-      ...task,
-      sessionType: "study",
-    });
-  }
-
-  // =========================
-  // START EXERCISE FOCUS
-  // =========================
-
-  function handleStartExercise(exercise) {
-    setSelectedSession({
-      ...exercise,
-      sessionType: "exercise",
-    });
-  }
-
-  // =========================
-  // START CALENDAR SESSION
-  // =========================
-
-  function handleStartScheduledSession(calendarSession) {
-    if (!calendarSession) return;
-
-    if (calendarSession.type === "study") {
-      const linkedTask = tasks.find(
-        (task) =>
-          task.id === calendarSession.linkedItemId
-      );
-
-      if (!linkedTask) return;
-
-      setSelectedSession({
-        ...linkedTask,
-        sessionType: "study",
-        calendarSessionId: calendarSession.id,
-      });
-
-      return;
-    }
-
-    const linkedExercise = exercises.find(
-      (exercise) =>
-        exercise.id === calendarSession.linkedItemId
-    );
-
-    if (!linkedExercise) return;
-
-    setSelectedSession({
-      ...linkedExercise,
-      sessionType: "exercise",
-      calendarSessionId: calendarSession.id,
-    });
-  }
-
-  // =========================
-  // COMPLETE SESSION
-  // =========================
-
-  function handleSessionComplete(session, minutes) {
-    if (!session) return;
-
-    const completedMinutes =
-      Number(minutes) > 0
-        ? Number(minutes)
-        : 1;
-
-    // STUDY
-    if (session.sessionType === "study") {
-      addFocusTime(
-        session.id,
-        completedMinutes
-      );
-    }
-
-    // EXERCISE
-    if (session.sessionType === "exercise") {
-      addExerciseTime(
-        session.id,
-        completedMinutes
-      );
-    }
-
-    if (session.calendarSessionId) {
-      updateScheduledSession(
-        session.calendarSessionId,
-        { completed: true }
-      );
-    }
-
-    setSelectedSession(null);
+  function handleStartFocus(task) { select('task', task.id); }
+  function handleStartExercise(exercise) { select('exercise', exercise.id); }
+  function handleStartScheduledSession(session) {
+    if (session?.linkedItemId) select(session.type === 'study' ? 'task' : 'exercise', session.linkedItemId, session.id);
   }
 
   // =========================
@@ -151,26 +55,6 @@ function Dashboard() {
               Please wait while we load your
               dashboard data.
             </p>
-          </div>
-        </section>
-      </Layout>
-    );
-  }
-
-  // =========================
-  // ERROR
-  // =========================
-
-  if (error) {
-    return (
-      <Layout>
-        <section className="dashboard-page">
-          <div className="empty-state">
-            <h2>
-              Something went wrong
-            </h2>
-
-            <p>{error}</p>
           </div>
         </section>
       </Layout>
@@ -262,7 +146,7 @@ function Dashboard() {
           </p>
 
           <h1>
-            Welcome back, Student 👋
+            Welcome back, {profile?.displayName || user?.username || "Student"} 👋
           </h1>
 
           <p className="dashboard-description">
@@ -572,10 +456,7 @@ function Dashboard() {
 
           {/* SHARED TIMER */}
 
-          <FocusTimer
-            selectedSession={selectedSession}
-            onComplete={handleSessionComplete}
-          />
+          <FocusTimer />
 
 
           {/* STUDY TASKS */}

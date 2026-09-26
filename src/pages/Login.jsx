@@ -1,46 +1,28 @@
-import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
+import { api } from "../services/api";
 
 function Login() {
   const navigate = useNavigate();
+  const { authenticate } = useAuth();
+  const [submitting,setSubmitting] = useState(false);
 
   const [isCreateAccount, setIsCreateAccount] = useState(false);
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
+  const [googleEnabled,setGoogleEnabled] = useState(false);
+  useEffect(() => {
+    if(new URLSearchParams(window.location.search).has('authError')) setError('Google sign-in failed. Please try again.');
+    api('/auth/providers').then(data=>setGoogleEnabled(data.google)).catch(()=>{});
+  },[]);
 
-  function handleSubmit(event) {
-    event.preventDefault();
-    setError("");
-
-    if (!username.trim()) {
-      setError("Please enter your username.");
-      return;
-    }
-
-    if (password.length < 4) {
-      setError("Password must contain at least 4 characters.");
-      return;
-    }
-
-    const user = {
-      username: username.trim(),
-    };
-
-    /*
-      FRONTEND DEMO ONLY
-
-      Do NOT use localStorage passwords in a real production
-      application. Real authentication should be implemented
-      securely on a backend.
-    */
-
-    localStorage.setItem(
-      "balanceboardUser",
-      JSON.stringify(user)
-    );
-
-    navigate("/dashboard");
+  async function handleSubmit(event) {
+    event.preventDefault(); setError(''); setSubmitting(true);
+    try { await authenticate(isCreateAccount?'register':'login',username.trim(),password); navigate('/dashboard'); }
+    catch(e) { setError(e.message); }
+    finally { setSubmitting(false); }
   }
 
   return (
@@ -122,12 +104,12 @@ function Login() {
                   ? "new-password"
                   : "current-password"
               }
-              minLength="4"
+              minLength={isCreateAccount ? 12 : 1}
               required
             />
 
             <small>
-              Minimum 4 characters
+              {isCreateAccount ? "Minimum 12 characters" : "Use your account password"}
             </small>
           </div>
 
@@ -142,6 +124,7 @@ function Login() {
 
           <button
             type="submit"
+            disabled={submitting}
             className="login-submit"
           >
             {isCreateAccount
@@ -149,15 +132,15 @@ function Login() {
               : "Sign In"}
           </button>
         </form>
-
-  
-
-        <Link
-          to="/dashboard"
-          className="guest-link"
-        >
-          Continue as guest →
-        </Link>
+        <div className="login-alternative">
+          <span>or</span>
+          {googleEnabled ? (
+            <a className="google-signin" href="/api/auth/google"><strong aria-hidden="true">G</strong> Continue with Google</a>
+          ) : (
+            <button className="google-signin" type="button" disabled title="Google sign-in needs a configured Google OAuth client"><strong aria-hidden="true">G</strong> Continue with Google</button>
+          )}
+          {!googleEnabled && <small>Google sign-in requires OAuth setup. See README.</small>}
+        </div>
       </section>
     </main>
   );

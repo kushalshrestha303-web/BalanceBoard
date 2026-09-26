@@ -4,9 +4,12 @@
   "version": "0.1.0",
   "type": "module",
   "scripts": {
-    "dev": "vite",
+    "dev": "node scripts/dev.js",
     "build": "vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "start": "npm --prefix server start",
+    "test": "npm --prefix server test",
+    "web": "vite"
   },
   "dependencies": {
     "@vitejs/plugin-react": "latest",

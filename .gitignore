@@ -2,3 +2,14 @@ node_modules
 dist
 .env
 .DS_Store
+/server/data/
+*.sqlite
+*.sqlite-shm
+*.sqlite-wal
+
+node_modules/
+.env
+.env.local
+.env.production
+dist/
+.vercel/

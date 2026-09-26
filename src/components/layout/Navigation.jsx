@@ -1,21 +1,14 @@
 import { NavLink, useNavigate } from "react-router-dom";
+import { useAuth } from "../../context/AuthContext";
+import { useState } from "react";
 
 function Navigation() {
   const navigate = useNavigate();
+  const [logoutError,setLogoutError]=useState('');
 
-  const userData = localStorage.getItem("balanceboardUser");
-
-  const user = userData
-    ? JSON.parse(userData)
-    : null;
-
-  const username = user?.username || "Student";
-
-  function handleLogout() {
-    localStorage.removeItem("balanceboardUser");
-
-    navigate("/");
-  }
+  const { user, profile, logout } = useAuth();
+  const username = profile?.displayName || user?.username || 'Student';
+  async function handleLogout() { try {await logout(); navigate('/');} catch(e) {setLogoutError(e.message);} }
 
   return (
     <header className="navigation">
@@ -48,7 +41,7 @@ function Navigation() {
 
         <div className="profile-section">
 
-          <div className="profile-info">
+          <NavLink to="/profile" className="profile-info profile-link" aria-label="Profile and alarm settings">
             <div
               className="profile-avatar"
               aria-hidden="true"
@@ -59,7 +52,7 @@ function Navigation() {
             <span className="profile-name">
               {username}
             </span>
-          </div>
+          </NavLink>
 
           <button
             type="button"
@@ -68,6 +61,7 @@ function Navigation() {
           >
             Logout
           </button>
+          {logoutError && <span role="alert">{logoutError}</span>}
 
         </div>
 

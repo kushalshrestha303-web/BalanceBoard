@@ -12,6 +12,7 @@ function AddTask({ onClose }) {
   });
 
   const [error, setError] = useState("");
+  const [saving, setSaving] = useState(false);
 
   function handleChange(event) {
     const { name, value } = event.target;
@@ -22,8 +23,9 @@ function AddTask({ onClose }) {
     }));
   }
 
-  function handleSubmit(event) {
+  async function handleSubmit(event) {
     event.preventDefault();
+    if (saving) return;
 
     const title =
       formData.title.trim();
@@ -48,7 +50,9 @@ function AddTask({ onClose }) {
       return;
     }
 
-    addTask({
+    setSaving(true);
+    try {
+    await addTask({
       ...formData,
       title,
       focusMinutes,
@@ -57,6 +61,7 @@ function AddTask({ onClose }) {
     setError("");
 
     onClose();
+    } catch(e) { setError(e.message); } finally { setSaving(false); }
   }
 
   return (
@@ -228,6 +233,7 @@ function AddTask({ onClose }) {
 
             <button
               type="submit"
+            disabled={saving}
               className="primary-button"
             >
               Create Task
