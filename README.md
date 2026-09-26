@@ -1,99 +1,858 @@
-# BalanceBoard · Full-stack application
+<div align="center">
 
-Study, exercise, calendar, mood, hydration, analytics and achievements for student wellbeing. Built from the original ICT930 React frontend with a persistent Express/SQLite backend.
+<img src="./balanceboard-logo.svg" alt="BalanceBoard logo" width="620" />
 
-For a public HTTPS deployment where anyone with a Google account can sign in, follow [DEPLOY.md](DEPLOY.md). The local SQLite database needs persistent hosting storage.
+# BalanceBoard
 
-## Run locally
+### A full-stack productivity and wellbeing application
 
-Requires **Node.js 22.13+** and npm. In this folder:
+BalanceBoard brings **study planning, exercise, calendar scheduling, focus timers, mood, hydration, reminders, analytics and achievements** into one place.
+
+I designed the app so the frontend, backend and database work together as one complete system, with persistent user accounts and saved activity data.
+
+</div>
+
+---
+
+## Why I built this
+
+I built BalanceBoard to bring study planning, exercise, scheduling, focus sessions and daily wellbeing into one simple dashboard. The goal is to make it easier to plan the day, stay focused and track progress without switching between multiple apps.
+
+The main idea is simple:
+
+> **Plan → Focus → Record → Review**
+
+A user signs in, adds activities, schedules sessions, uses the timer, records wellbeing information and then reviews their progress through the dashboard and analytics pages.
+
+---
+
+## Main features
+
+- User registration and password login
+- Optional Google sign-in
+- Personal profile and account settings
+- Study task management
+- Exercise activity tracking
+- Persistent Pomodoro / focus timer
+- Calendar scheduling
+- Mood tracking
+- Water tracking
+- Upcoming session reminders
+- Browser ringtone and vibration support for scheduled sessions
+- Desktop browser notifications when permission is granted
+- Analytics and achievement views
+- Per-user data isolation
+- Persistent SQLite database
+- Frontend and backend validation
+- API integration between React and Express
+
+---
+
+# System Architecture
+
+BalanceBoard uses a simple three-layer full-stack architecture.
+
+```mermaid
+flowchart LR
+    U[User] --> UI[React Frontend]
+    UI --> API[Express REST API]
+    API --> V[Validation & Authentication]
+    V --> DB[(SQLite Database)]
+
+    DB --> V
+    V --> API
+    API --> UI
+    UI --> U
+```
+
+### 1. Presentation layer — React
+
+The React frontend is responsible for everything the user sees and interacts with.
+
+Examples include:
+
+- login and registration forms
+- dashboard
+- study tasks
+- exercise activities
+- calendar
+- profile settings
+- timer
+- reminders
+- analytics
+- achievements
+
+The frontend does not directly access the database. It communicates with the backend using HTTP API requests.
+
+### 2. Application layer — Express
+
+The Express server contains the main backend logic.
+
+It is responsible for:
+
+- receiving API requests
+- checking the logged-in user
+- validating incoming data
+- processing actions
+- managing authentication
+- managing sessions
+- reading and writing data
+- returning JSON responses to the frontend
+
+### 3. Data layer — SQLite
+
+SQLite stores the persistent application data.
+
+The database keeps information such as:
+
+- user accounts
+- sessions
+- profile settings
+- tasks
+- exercise activities
+- calendar sessions
+- mood entries
+- water entries
+- timer state
+- progress information
+
+This means the user's information remains available after the page is refreshed or the server is restarted.
+
+---
+
+# Input, Processing and Output
+
+One easy way to explain BalanceBoard is to describe it as an **Input → Processing → Storage → Output** system.
+
+```mermaid
+flowchart TD
+    A[User Input] --> B[React Interface]
+    B --> C[API Request]
+    C --> D[Express Backend]
+    D --> E{Authenticated?}
+    E -- No --> F[Return Error]
+    E -- Yes --> G[Validate Input]
+    G --> H{Valid?}
+    H -- No --> I[Return Validation Error]
+    H -- Yes --> J[Process Action]
+    J --> K[(SQLite Database)]
+    K --> L[Return Updated Data]
+    L --> M[React Updates Interface]
+    M --> N[User Sees Result]
+```
+
+## Input examples
+
+The user can provide input through forms, buttons and controls.
+
+| User input | Example |
+|---|---|
+| Account information | Name, email and password |
+| Study task | "Study ICT930 for 45 minutes" |
+| Exercise | "Walk for 30 minutes" |
+| Calendar session | Date, time and linked activity |
+| Mood | Daily mood selection |
+| Hydration | Water intake |
+| Timer | Start, pause, resume, reset or save |
+| Profile settings | Display name, email and alarm settings |
+
+## Processing
+
+After the user performs an action:
+
+1. React collects the information.
+2. React sends an API request to Express.
+3. Express checks the user's session.
+4. The backend validates the submitted data.
+5. The requested action is processed.
+6. SQLite is updated when required.
+7. The server sends a response back to React.
+
+## Output
+
+The final output is shown back to the user through the interface.
+
+Examples include:
+
+- updated task lists
+- completed study minutes
+- timer countdown
+- upcoming calendar sessions
+- mood and hydration information
+- reminder banners
+- alarm notifications
+- analytics
+- achievements
+- profile information
+
+---
+
+# Application Data Flow
+
+This is the normal data flow when a signed-in user changes something in BalanceBoard.
+
+```mermaid
+sequenceDiagram
+    actor User
+    participant React as React Frontend
+    participant API as Express API
+    participant Auth as Authentication / Validation
+    participant DB as SQLite
+
+    User->>React: Enter or change information
+    React->>API: Send HTTP request
+    API->>Auth: Check session and validate request
+    Auth-->>API: User verified
+    API->>DB: Read or update user data
+    DB-->>API: Return stored data
+    API-->>React: Return JSON response
+    React-->>User: Update the screen
+```
+
+### Simple example
+
+If the user adds a study task called **"Prepare for ICT930 quiz"**:
+
+```text
+User
+  ↓
+Task form
+  ↓
+React frontend
+  ↓
+POST /api/actions
+  ↓
+Express server
+  ↓
+Authentication + validation
+  ↓
+SQLite database
+  ↓
+Updated dashboard data
+  ↓
+React interface
+  ↓
+New task appears on screen
+```
+
+---
+
+# Authentication Flow
+
+BalanceBoard supports local password authentication and optional Google authentication.
+
+## Password login
+
+```mermaid
+flowchart LR
+    U[User] --> F[Login Form]
+    F --> A[Express Auth API]
+    A --> P[Verify Password]
+    P --> S[Create Session]
+    S --> C[HttpOnly Session Cookie]
+    C --> D[Authenticated Dashboard]
+```
+
+Passwords are not stored as plain text. They are processed using **scrypt with a unique salt**.
+
+After successful authentication, the server creates a random session token. The browser receives the token through an **HttpOnly, SameSite=Strict cookie**, while the database stores only a hash of the session token.
+
+Logging out invalidates the session.
+
+---
+
+## Google sign-in
+
+Google authentication uses the OAuth authorization-code flow.
+
+```mermaid
+sequenceDiagram
+    actor User
+    participant App as BalanceBoard
+    participant Google as Google OAuth
+    participant API as BalanceBoard Backend
+    participant DB as SQLite
+
+    User->>App: Continue with Google
+    App->>Google: Start OAuth login
+    Google->>User: Google account selection
+    Google->>API: Authorization callback
+    API->>Google: Exchange authorization code
+    Google-->>API: Identity information
+    API->>API: Verify signed ID token
+    API->>DB: Create / load local account
+    API-->>App: Create authenticated session
+```
+
+The implementation also uses **state, nonce and PKCE** as part of the Google authentication flow.
+
+Google authentication requires the owner of the deployment to configure valid Google OAuth credentials.
+
+---
+
+# Persistent Timer Architecture
+
+The focus / exercise timer is not only stored inside a React component.
+
+Its state is shared across routes and stored against the signed-in account in SQLite.
+
+That is why moving from Dashboard to Calendar, Profile or Analytics does not intentionally restart the timer.
+
+```mermaid
+flowchart TD
+    A[User Starts Timer] --> B[TimerContext]
+    B --> C[PUT /api/timer]
+    C --> D[(SQLite Timer State)]
+    D --> E[Stored Deadline / Remaining State]
+
+    F[User Changes Page] --> G[TimerContext Still Active]
+    G --> H[GET /api/timer]
+    H --> D
+
+    I[Browser Refresh] --> H
+    D --> J[Restore Timer]
+    J --> K[Continue Countdown]
+```
+
+The timer supports:
+
+- start
+- pause
+- resume
+- reset
+- discard
+- completion
+- saving progress
+
+Only one active timer is stored for each account.
+
+Other tabs can synchronize the timer when they regain focus or during periodic synchronization.
+
+---
+
+# Calendar and Alarm Data Flow
+
+Calendar sessions can be created independently or linked to a study task or exercise activity.
+
+```mermaid
+flowchart LR
+    A[Create Calendar Session] --> B[React Calendar]
+    B --> C[Backend API]
+    C --> D[(SQLite)]
+    D --> E[Upcoming Session]
+    E --> F[Reminder Component]
+    F --> G{Session Due?}
+    G -- No --> H[Show Upcoming Reminder]
+    G -- Yes --> I[Show Alarm]
+    I --> J[Ringtone]
+    I --> K[Vibration]
+    I --> L[Desktop Notification]
+```
+
+The browser can attempt to:
+
+- play a short ringtone
+- vibrate the device when supported
+- display a desktop notification when permission has been granted
+
+### Important limitation
+
+BalanceBoard is a web application, not a native background alarm service.
+
+The alarm feature works while the application is open, but browsers can restrict background tabs. An alarm therefore cannot be guaranteed after the browser is completely closed or the device is asleep.
+
+---
+
+# Example User Journey
+
+A typical BalanceBoard session looks like this:
+
+```mermaid
+flowchart TD
+    A[Register / Login] --> B[Dashboard]
+    B --> C[Create Study Task]
+    C --> D[Schedule Session]
+    D --> E[Start Focus Timer]
+    E --> F[Study]
+    F --> G[Save Progress]
+    G --> H[Record Mood / Water]
+    H --> I[View Analytics]
+    I --> J[Review Progress]
+```
+
+For example:
+
+1. I log in to my BalanceBoard account.
+2. I create a task called **"Study SC-200"** for 45 minutes.
+3. I schedule the task for 7:00 PM.
+4. I start the focus timer.
+5. I move to another page and the timer continues.
+6. When the session time is reached, BalanceBoard can show an alarm while the app is open.
+7. I save the completed focus time.
+8. The dashboard and analytics reflect the updated progress.
+
+---
+
+# API Overview
+
+The frontend communicates with the backend through REST-style API endpoints.
+
+### Authentication
+
+```text
+GET  /api/auth/providers
+GET  /api/auth/google
+GET  /api/auth/google/callback
+
+POST /api/auth/register
+POST /api/auth/login
+POST /api/auth/logout
+
+GET  /api/auth/me
+```
+
+### Profile
+
+```text
+GET   /api/profile
+PATCH /api/profile
+PATCH /api/profile/password
+```
+
+### Dashboard and actions
+
+```text
+GET  /api/dashboard?day=YYYY-MM-DD
+POST /api/actions
+```
+
+Example action:
+
+```json
+{
+  "type": "task.add",
+  "payload": {
+    "title": "Study",
+    "focusMinutes": 25
+  }
+}
+```
+
+### Timer
+
+```text
+GET  /api/timer
+PUT  /api/timer
+POST /api/timer/actions
+```
+
+### Alarm
+
+```text
+GET /api/alarms/due?day=YYYY-MM-DD&time=HH:mm
+```
+
+Protected API endpoints require an authenticated session.
+
+---
+
+# Project Structure
+
+```text
+BalanceBoard/
+│
+├── public/
+│   └── data/
+│
+├── scripts/
+│   └── dev.js
+│
+├── server/
+│   ├── data/
+│   │   └── balanceboard.sqlite
+│   │
+│   └── src/
+│       ├── server.js
+│       ├── googleAuth.js
+│       ├── timer.js
+│       ├── server.test.js
+│       └── timer.test.js
+│
+├── src/
+│   ├── components/
+│   │   └── layout/
+│   │       └── Reminders.jsx
+│   │
+│   ├── context/
+│   │   └── TimerContext.jsx
+│   │
+│   ├── pages/
+│   │   └── Profile.jsx
+│   │
+│   └── ...
+│
+├── .env.example
+├── .gitignore
+├── DEPLOY.md
+├── README.md
+├── index.html
+├── package.json
+├── package-lock.json
+└── vite.config.js
+```
+
+### Important files
+
+| File | Purpose |
+|---|---|
+| `src/` | React pages, components and frontend logic |
+| `server/src/server.js` | Express server, API routes, validation and SQLite schema |
+| `server/src/googleAuth.js` | Google identity-token verification |
+| `server/src/timer.js` | Persistent timer logic and progress saving |
+| `src/context/TimerContext.jsx` | Shared frontend timer state |
+| `src/pages/Profile.jsx` | Profile and alarm settings |
+| `src/components/layout/Reminders.jsx` | Reminder and in-page alarm handling |
+| `server/data/` | Local SQLite database directory |
+| `scripts/dev.js` | Starts frontend and backend during development |
+| `DEPLOY.md` | Deployment instructions |
+
+---
+
+# Technologies Used
+
+| Area | Technology |
+|---|---|
+| Frontend | React |
+| Development build tool | Vite |
+| Backend | Node.js |
+| API server | Express |
+| Database | SQLite |
+| Authentication | Local password authentication + Google OAuth |
+| Password protection | scrypt + unique salt |
+| Session management | Secure random session token + HttpOnly cookie |
+| Testing | Backend/API integration tests |
+| Source control | Git + GitHub |
+
+---
+
+# Running BalanceBoard Locally
+
+## Requirements
+
+Install:
+
+- Node.js **22.13 or newer**
+- npm
+
+Clone the repository:
+
+```bash
+git clone https://github.com/kushalshrestha303-web/BalanceBoard.git
+cd BalanceBoard
+```
+
+Install frontend dependencies:
 
 ```bash
 npm ci
+```
+
+Install backend dependencies:
+
+```bash
 npm ci --prefix server
+```
+
+Start the development environment:
+
+```bash
 npm run dev
 ```
 
-Open **http://localhost:5173**. The command starts Vite and the API on port 3001. Create an account with a 12+ character password; your work is saved to `server/data/balanceboard.sqlite` and remains after a restart. Accounts have separate data. No database service, API key, or `.env` is required.
+Open:
 
-### Enable Google sign-in
+```text
+http://localhost:5173
+```
 
-Password sign-in works immediately. To enable the Google button:
+The development command starts:
 
-1. In [Google Cloud Console](https://console.cloud.google.com/apis/credentials), configure the OAuth consent screen and create an **OAuth client ID** of type **Web application**. Choose External for accounts outside your organization; see DEPLOY.md for public access settings.
-2. Add **`http://localhost:5173/api/auth/google/callback`** as an authorized redirect URI. Use **`http://localhost:5173`** as an authorized JavaScript origin if requested.
-3. Copy `.env.example` to `.env` in this project folder. Put your real `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET` into `.env`; keep `APP_ORIGIN=http://localhost:5173` for development.
-4. Restart `npm run dev`, open **http://localhost:5173/login**, and choose **Continue with Google**. The button is disabled until configuration is present. Never commit `.env` or share your client secret.
+- React / Vite frontend
+- Express API on port `3001`
 
-Google sign-in uses the authorization-code flow with state, nonce and PKCE; the backend verifies Google's signed identity token and creates a local session. Google accounts are separate from password accounts even if the email address happens to match. When using `npm start` on port 3001, use `APP_ORIGIN=http://localhost:3001` and register **`http://localhost:3001/api/auth/google/callback`** instead. For a public deployment, use your HTTPS site origin and corresponding HTTPS callback URI. Google sign-in requires the backend to reach Google's OAuth and certificate endpoints.
+A local account can be created without configuring Google authentication.
 
-To build and run from one production server:
+---
+
+# Google Sign-In Setup
+
+Password authentication works without additional configuration.
+
+To enable **Continue with Google**:
+
+1. Open Google Cloud Console.
+2. Configure the OAuth consent screen.
+3. Create an OAuth client of type **Web application**.
+4. For public Google accounts, configure the application appropriately for external users.
+5. Add this local redirect URI:
+
+```text
+http://localhost:5173/api/auth/google/callback
+```
+
+6. If Google asks for a JavaScript origin, use:
+
+```text
+http://localhost:5173
+```
+
+7. Copy:
+
+```text
+.env.example
+```
+
+to:
+
+```text
+.env
+```
+
+8. Add the real Google credentials:
+
+```env
+GOOGLE_CLIENT_ID=your_client_id
+GOOGLE_CLIENT_SECRET=your_client_secret
+APP_ORIGIN=http://localhost:5173
+```
+
+9. Restart:
+
+```bash
+npm run dev
+```
+
+10. Open the login page and select **Continue with Google**.
+
+> Never commit the real `.env` file or expose the Google client secret in GitHub.
+
+---
+
+# Production Build
+
+Build the frontend:
 
 ```bash
 npm run build
+```
+
+Run the production server:
+
+```bash
 npm start
 ```
 
-Open **http://localhost:3001**. Change `PORT` if port 3001 is busy. Set `DB_PATH` to an absolute path to relocate the database. Use HTTPS when deploying publicly so session cookies use the Secure attribute. Back up the SQLite database file to retain accounts and activity. Do not upload the database or `node_modules` to Git.
+The application can then be opened from:
 
-## How it works
+```text
+http://localhost:3001
+```
 
-- Register or sign in with a password or a configured Google account. Passwords are hashed with scrypt and a unique salt. Sessions use a random token in an HttpOnly, SameSite=Strict cookie. The database stores only a hash of each session token. Logout invalidates it.
-- The Pomodoro/exercise timer is shared across routes and stored per account in SQLite. Start it on Dashboard, then visit Calendar, Profile, Analytics or another page: a compact timer stays visible. Refreshing or reopening the app restores the same deadline. It continues while you are signed out or the browser is closed; use Pause to stop counting. At zero, choose Save progress to credit elapsed time once. Reset and Discard intentionally remove unsaved elapsed time. Only one timer is active per account; other tabs sync within 15 seconds or when focused. The timer is not a background alarm service.
-- Add study tasks and exercise items; track time, complete or delete them. All mutations are checked and scoped to the signed-in account.
-- Schedule or edit calendar sessions. A new standalone session creates a linked task or exercise. A linked session refers only to an item in your account. Deleted items are unlinked from calendar sessions.
-- Mood and water are saved per local calendar day. The activity streak uses days on which activity was recorded. The existing analytics and achievements use the persisted dashboard data.
-- Upcoming sessions show a configurable reminder banner (0, 5, 10, or 30 minutes before start). The app does not send email or background push notifications.
-- Click your profile avatar/name to edit your display name and optional email, inspect account details, change a local password, and save per-account alarm settings. Profile email is not verified and is never used for delivery.
-- At a scheduled session's start, the authenticated alarm endpoint returns only that user's due sessions. While BalanceBoard is open, the page shows an alarm, attempts a short ringtone and vibration when enabled and supported, and can show a desktop notification with browser permission. Click **Test ringtone & vibration** in Profile to allow browser audio. The browser may throttle an inactive tab; the app cannot guarantee an alarm after the tab/browser is closed or the device is asleep.
+For a public deployment:
 
-## API
+- use HTTPS
+- set `NODE_ENV=production`
+- configure the exact `APP_ORIGIN`
+- provide valid Google OAuth credentials if Google login is enabled
+- use persistent storage for the SQLite database
+- back up the database regularly
 
-`GET /api/health`, `/api/auth/providers`, `/api/auth/google`, `/api/auth/google/callback`; `POST /api/auth/register`, `/api/auth/login`, `/api/auth/logout`; `GET /api/auth/me`, `/api/profile`, `/api/alarms/due?day=YYYY-MM-DD&time=HH:mm`, `/api/dashboard?day=YYYY-MM-DD`; `PATCH /api/profile`, `/api/profile/password`; `POST /api/actions`; `GET /api/timer`, `PUT /api/timer`, `POST /api/timer/actions`. Protected endpoints require the session cookie. `POST /api/actions` accepts `{ "type": "task.add", "payload": { "title": "Study", "focusMinutes": 25 } }` and typed task, exercise, wellness and session actions implemented in `server/src/server.js`.
+---
 
-## Verify
+# Database Persistence
+
+By default, local application data is stored in:
+
+```text
+server/data/balanceboard.sqlite
+```
+
+The database is created when required.
+
+A custom database location can be configured using `DB_PATH`.
+
+The database file should **not** be committed to GitHub.
+
+Example `.gitignore` entries:
+
+```gitignore
+node_modules/
+.env
+.env.local
+.env.production
+dist/
+.vercel/
+server/data/*.sqlite
+server/data/*.sqlite-*
+```
+
+---
+
+# Validation and Security
+
+BalanceBoard applies several controls to protect user data.
+
+### Authentication
+
+- Passwords are hashed using scrypt.
+- A unique salt is used with each password.
+- Session tokens are random.
+- The browser session is stored using an HttpOnly cookie.
+- The database stores a hash of the session token.
+- Logout invalidates the session.
+
+### Authorization
+
+Protected operations are associated with the authenticated account.
+
+A signed-in user should only be able to access or modify their own:
+
+- tasks
+- exercise records
+- calendar sessions
+- wellness records
+- timer
+- profile
+- alarm information
+
+### Validation
+
+The backend validates incoming requests before changing stored data.
+
+Invalid or unauthenticated requests are rejected instead of being written directly to the database.
+
+---
+
+# Testing
+
+Run the production build check:
 
 ```bash
 npm run build
+```
+
+Run automated tests:
+
+```bash
 npm test
 ```
 
-The API test covers registration through the development origin, rejection of unrelated origins, profile persistence and validation, password change, due alarms and user isolation, logout, and a mocked Google OAuth exchange with a signed ID token. The timer integration test restarts the actual API process against the same database and checks deadline recovery, pause/resume, account isolation, stale-tab conflicts, completion and duplicate-save rejection. The build and both API suites pass. Browser navigation could not be tested in the remote browser because access to the local app was blocked. Live Google sign-in still requires your own OAuth client credentials. In the browser, create an account, add a task and calendar session for the next minute, open Profile to test sound/vibration and allow notifications, then keep the app open until the session starts. Refresh, sign out and sign back in to check persistence.
+The backend test coverage includes scenarios such as:
 
-### Check the timer in your browser
+- registration
+- origin validation
+- profile persistence
+- profile validation
+- password changes
+- due alarms
+- account isolation
+- logout
+- mocked Google OAuth exchange
+- timer persistence
+- pause and resume
+- timer recovery after server restart
+- stale-tab conflicts
+- timer completion
+- duplicate progress-save protection
 
-1. Add a two-minute study task; select **Focus**, then **Start / Resume**.
-2. Visit Calendar, Profile and Analytics. The compact timer should continue counting down.
-3. Refresh the page. It should restore the original deadline, without restarting at two minutes.
-4. Pause, navigate and refresh; the remaining time should stay unchanged. Resume it.
-5. At zero, select **Save progress**. The task should show its completed minutes once and the timer should clear.
-6. Sign into a different account; it should not see the first account's timer or activities.
+---
 
-The same checks apply to exercise timers. Deleting the activity also deletes its timer.
+# Manual Demo Checklist
 
-## Deployment status
+For a demonstration, I use this simple flow:
 
-This archive contains application code and setup instructions, not a live deployment or a guarantee of zero defects. Google credentials, public HTTPS hosting and a persistent disk must be configured by the owner. This SQLite version runs as a single server instance; it has not been load tested for a large public audience. Keep database backups and test restoration before relying on it for important data. Configure `NODE_ENV=production` and the exact `APP_ORIGIN` in hosting. If enabling `TRUST_PROXY=1`, ensure requests reach Node only through one trusted reverse proxy; this setting affects client-IP rate limiting.
+1. Register or log in.
+2. Create a study task.
+3. Start the task timer.
+4. Navigate to another page.
+5. Show that the timer is still running.
+6. Refresh the browser.
+7. Show that the timer restores its saved state.
+8. Create a calendar session.
+9. Open Profile and test ringtone / vibration.
+10. Add mood or water information.
+11. Open Analytics to show the recorded progress.
+12. Log out.
+13. Log in again and show that the data is still available.
 
-## Project layout
+This demonstrates the connection between the **frontend, backend, authentication, API and persistent database**.
 
-- `src/` — existing React views and components, authenticated routing and API-backed context.
-- `server/src/server.js` — Express routes, authentication, validation and SQLite schema.
-- `server/src/googleAuth.js` — Google ID-token signature and claim validation.
-- `src/pages/Profile.jsx` — account settings and alarm controls.
-- `src/components/layout/Reminders.jsx` — upcoming sessions and in-page alarm handling.
-- `server/src/server.test.js` and `server/src/timer.test.js` — API integration tests.
-- `server/src/timer.js` — persistent timer state and atomic progress saves.
-- `src/context/TimerContext.jsx` — shared timer state, deadline display and synchronization.
-- `server/data/` — database location created on first run; its files are ignored by Git.
-- `scripts/dev.js` — launches frontend and backend together.
+---
 
-BalanceBoard was originally created for ICT930 Assignment 2 Frontend Design Overview. This version extends the supplied frontend into a local full-stack application; it does not claim deployment or an unprovided assessment rubric.
+# How I Explain the Architecture
 
-## Assessment 3 fit and submission gaps
+A simple way I explain it is:
 
-The supplied ICT930 Assessment 3 brief requests a React-style frontend with at least five views, responsive forms and routing, backend CRUD/API and validation, a persistent database, API-based state management, and authentication. This project demonstrates those features locally. It addresses student time and wellbeing, which is an **equivalent proposed domain** rather than one of the listed approved domains; seek tutor approval for that domain as the brief requires. SQLite is persistent and suitable for this local demonstration, but the report should justify its selection and describe how a deployed multi-user system would use a more scalable database.
+> BalanceBoard uses React for the frontend, Express for the backend API and SQLite for persistent storage. When a user performs an action, React sends a request to the backend. The backend checks authentication, validates the request and then reads or updates the database. The updated result is returned to React and the interface refreshes with the latest data. Each account only has access to its own information. I also store timer state on the backend so the timer can continue across pages and recover after a refresh.
 
-The rubric unexpectedly assesses a *native app and sensor integration*, despite the detailed instructions calling for a web application. Browser vibration is an optional output capability, **not a sensor**. Confirm how the sensor criterion applies with the tutor; do not claim that the project meets it. The case study report (maximum five pages), architecture and data-flow diagrams, screenshots and testing evidence, repository/Git link, presentation slides, contribution statement and live team demonstration are separate submission requirements and are not contained in this source archive. No mark or HD outcome can be guaranteed from the code alone.
+---
 
-The attached brief also contains conflicting statements about permitted AI assistance, including a strict prohibition on AI-generated code/report/presentation; review those instructions and the declaration requirements before submitting any work based on this archive.
+# Current Limitations and Notes
+
+BalanceBoard is currently designed as a single-server web application.
+
+Some limitations are:
+
+- browser alarms require the application to remain available in the browser
+- vibration depends on browser and device support
+- desktop notifications require browser permission
+- browsers may throttle inactive tabs
+- the alarm is not a native operating-system background alarm
+- Google login requires deployment-specific OAuth credentials
+- SQLite requires persistent hosting storage
+- this version has not been designed or load-tested for a very large public user base
+
+These are areas I plan to improve as the project grows.
+
+---
+
+# What I Want to Improve Next
+
+Next improvements I want to work on include:
+
+- native mobile notifications
+- background push notifications
+- email reminders
+- password recovery
+- verified profile email addresses
+- cloud-hosted database
+- improved analytics
+- richer achievement system
+- mobile application version
+- advanced accessibility testing
+- automated deployment pipeline
+
+---
+
+# Repository
+
+**GitHub:**  
+https://github.com/kushalshrestha303-web/BalanceBoard
+
+---
+
+## Author
+
+**Kushal Shrestha**
+
+I built BalanceBoard as a full-stack productivity and wellbeing application focused on helping users manage study, exercise, scheduling and daily progress in one place.
+
+---
+
+<div align="center">
+
+### Balance your study. Track your wellbeing. Build better habits.
+
+**BalanceBoard**
+
+</div>
