@@ -5,8 +5,9 @@
 ======================================== */
 
 :root {
-  --primary-purple: #8b5cf6;
-  --deep-violet: #6d3fd8;
+  /* #7c3aed gives 5.7:1 on white and 5.0:1 on --light-lilac (WCAG AA for normal text) */
+  --primary-purple: #7c3aed;
+  --deep-violet: #6d28d9;
   --soft-lilac: #c4b5fd;
   --light-lilac: #f1edff;
 
@@ -20,7 +21,7 @@
 
   --success: #48a67a;
   --warning: #e6a45c;
-  --danger: #e66a6a;
+  --danger: #c24141; /* 5.1:1 on white (WCAG AA) */
 
   --shadow-sm: 0 4px 12px rgba(48, 37, 72, 0.04);
   --shadow-md: 0 12px 35px rgba(48, 37, 72, 0.07);
@@ -4242,7 +4243,13 @@ p {
 }
 
 .achievement-card-modern.locked {
-  opacity: 0.68;
+  background: var(--surface-soft);
+}
+
+/* Fade only the badge of locked achievements; fading the whole card made its text unreadable. */
+.achievement-card-modern.locked .achievement-badge-icon {
+  filter: grayscale(1);
+  opacity: 0.55;
 }
 
 .achievement-card-modern.unlocked {
@@ -4542,3 +4549,127 @@ p {
 .timer-error { color:#9d2546; font-size:.9rem; line-height:1.5; }
 .timer-inner h2 { font-variant-numeric:tabular-nums; }
 button:disabled { cursor:not-allowed; opacity:.55; }
+
+/* Edit + delete buttons on activity cards */
+.activity-card-tools {
+  display: flex;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+/* Accelerometer step counter (exercise timer) */
+.sensor-panel {
+  margin: 12px 0 4px;
+  padding: 12px 14px;
+  border-radius: 14px;
+  background: var(--light-lilac);
+  text-align: center;
+}
+.sensor-panel-count {
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  gap: 6px;
+}
+.sensor-panel-count strong {
+  font-size: 1.6rem;
+}
+.sensor-panel p {
+  margin: 6px 0 0;
+  font-size: 0.85rem;
+}
+.sensor-panel button {
+  margin-top: 8px;
+}
+.activity-steps {
+  font-weight: 600;
+}
+
+/* Movement (accelerometer) card on Analytics */
+.movement-card {
+  margin-bottom: var(--spacing-lg);
+}
+.movement-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 12px;
+  margin: 12px 0 16px;
+}
+.movement-stats dt {
+  font-size: 0.85rem;
+  color: var(--muted-text);
+}
+.movement-stats dd {
+  margin: 2px 0 0;
+  font-size: 1.4rem;
+  font-weight: 700;
+}
+.movement-bars {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 8px;
+  height: 140px;
+  padding: 0;
+  margin: 0;
+  list-style: none;
+}
+.movement-bars li {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 6px;
+}
+.movement-bar {
+  width: 100%;
+  max-width: 36px;
+  min-height: 2px;
+  border-radius: 8px 8px 0 0;
+  background: var(--primary-purple);
+}
+.movement-day {
+  font-size: 0.8rem;
+}
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* ========================================
+   SMALL-SCREEN FIXES (accessibility audit)
+======================================== */
+
+/* Phones: show all 7 calendar columns without sideways scrolling.
+   Event pills become coloured dots; the "Selected day" agenda below lists the details. */
+@media (max-width: 720px) {
+  .calendar-main-card { overflow-x: visible; }
+  .calendar-grid-modern,
+  .calendar-weekdays { min-width: 0; }
+  .calendar-weekdays > div { padding: 8px 2px; font-size: 10px; letter-spacing: 0; }
+  .calendar-cell { min-height: 58px; padding: 4px; display: flex; flex-direction: column; align-items: center; }
+  .calendar-day-number { width: 26px; height: 26px; font-size: 11px; }
+  .calendar-cell-events { display: flex; flex-wrap: wrap; justify-content: center; gap: 3px; margin-top: 4px; }
+  .calendar-event-pill { width: 8px; height: 8px; padding: 0; border-radius: 50%; font-size: 0; background: var(--primary-purple); }
+  .calendar-event-pill.study { background: var(--primary-purple); }
+  .calendar-event-pill.exercise { background: var(--success); }
+  .calendar-event-pill > * { display: none; }
+  .calendar-more-events { font-size: 9px; }
+}
+
+/* Phones: the four main links sit in a 2 x 2 grid instead of being cut off. */
+@media (max-width: 480px) {
+  .navigation nav {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 6px;
+    overflow-x: visible;
+  }
+  .navigation nav a { text-align: center; }
+}

@@ -1,7 +1,29 @@
 import { useTimer } from "../../context/TimerContext";
 
+const SENSOR_MESSAGES = {
+  unsupported: 'Step counting needs a phone browser on a secure (HTTPS) page. Time is still tracked.',
+  'needs-permission': 'Allow motion access to count your steps during this exercise.',
+  denied: 'Motion access was refused, so steps are not counted. You can allow it in your browser settings.',
+  ready: 'Start the timer and carry your phone; steps are counted with the accelerometer.',
+  counting: 'Counting steps with your phone\'s accelerometer.',
+  'no-data': 'No motion data from this device (desktop computers have no accelerometer). Time is still tracked.',
+};
+
+// Live step count from the accelerometer while an exercise timer is selected.
+function StepSensorPanel({ sensor }) {
+  return <div className="sensor-panel" role="status" aria-live="polite">
+    <div className="sensor-panel-count">
+      <span aria-hidden="true">👣</span>
+      <strong>{sensor.sessionSteps}</strong>
+      <span>steps this session</span>
+    </div>
+    <p>{SENSOR_MESSAGES[sensor.status]}</p>
+    {sensor.status === 'needs-permission' && <button type="button" className="secondary-button" onClick={sensor.requestPermission}>Enable motion sensor</button>}
+  </div>;
+}
+
 export default function FocusTimer() {
-  const { timer, status, remainingMs, formatted, busy, loading, error, command, sync } = useTimer();
+  const { timer, status, remainingMs, formatted, busy, loading, error, command, sync, sensor } = useTimer();
   const exercise = timer?.kind === 'exercise';
   const progress = timer ? Math.max(0, Math.min(100, (1 - remainingMs / timer.totalMs) * 100)) : 0;
   return <article className="dashboard-card focus-card" id="focus-timer">
@@ -24,6 +46,7 @@ export default function FocusTimer() {
         </div>
       </div>
     </div>
+    {exercise && <StepSensorPanel sensor={sensor} />}
     {status === 'finished' && <p role="status">Session finished. Save your progress below.</p>}
     <div className="focus-controls">
       <button type="button" className="primary-button" disabled={!timer || busy || loading || status === 'finished'} onClick={()=>command(status === 'running' ? 'pause' : 'start')}>{status === 'running' ? 'Pause' : 'Start / Resume'}</button>

@@ -281,6 +281,8 @@ function Calendar() {
                     }`}
                     onClick={() => setSelectedDate(dateKey)}
                     onDoubleClick={() => openAddModal(dateKey)}
+                    aria-pressed={selected}
+                    aria-label={`${day} ${currentDate.toLocaleDateString("en-AU", { month: "long" })}${isToday ? ", today" : ""}: ${daySessions.length} ${daySessions.length === 1 ? "session" : "sessions"}`}
                   >
                     <span className="calendar-day-number">{day}</span>
 

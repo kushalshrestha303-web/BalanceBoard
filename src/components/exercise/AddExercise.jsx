@@ -1,14 +1,16 @@
 import { useState } from "react";
 import { useDashboard } from "../../context/DashboardContext";
 
-function AddExercise({ onClose }) {
-  const { addExercise } = useDashboard();
+// Used for both creating an exercise and editing an existing one (when `exercise` is passed).
+function AddExercise({ onClose, exercise = null }) {
+  const { addExercise, updateExercise } = useDashboard();
+  const editing = Boolean(exercise);
 
   const [formData, setFormData] = useState({
-    title: "",
-    category: "Cardio",
-    description: "",
-    exerciseMinutes: 30,
+    title: exercise?.title ?? "",
+    category: exercise?.category ?? "Cardio",
+    description: exercise?.description ?? "",
+    exerciseMinutes: exercise?.exerciseMinutes ?? 30,
   });
 
   const [error, setError] = useState("");
@@ -41,14 +43,14 @@ function AddExercise({ onClose }) {
 
     setSaving(true);
     try {
-    await addExercise({
-      title: formData.title,
+    const data = {
+      title: formData.title.trim(),
       category: formData.category,
       description: formData.description,
-      exerciseMinutes: Number(
-        formData.exerciseMinutes
-      ),
-    });
+      exerciseMinutes: Number(formData.exerciseMinutes),
+    };
+    if (editing) await updateExercise(exercise.id, data);
+    else await addExercise(data);
 
     onClose();
     } catch(e) { setError(e.message); } finally { setSaving(false); }
@@ -65,11 +67,11 @@ function AddExercise({ onClose }) {
         <div className="modal-header">
           <div>
             <p className="page-eyebrow">
-              NEW EXERCISE
+              {editing ? "EDIT EXERCISE" : "NEW EXERCISE"}
             </p>
 
             <h2 id="add-exercise-title">
-              Add Exercise
+              {editing ? "Edit exercise" : "Add Exercise"}
             </h2>
           </div>
 
@@ -110,6 +112,10 @@ function AddExercise({ onClose }) {
               value={formData.category}
               onChange={handleChange}
             >
+              {editing && !["Cardio", "Strength", "Yoga", "Walking", "Cycling", "Other"].includes(exercise.category) && (
+                <option value={exercise.category}>{exercise.category}</option>
+              )}
+
               <option value="Cardio">
                 🏃 Cardio
               </option>
@@ -189,7 +195,7 @@ function AddExercise({ onClose }) {
             disabled={saving}
               className="primary-button"
             >
-              Add Exercise
+              {editing ? "Save Changes" : "Add Exercise"}
             </button>
           </div>
         </form>

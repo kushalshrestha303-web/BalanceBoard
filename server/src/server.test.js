@@ -14,12 +14,12 @@ const server=app.listen(0);
 const origin=`http://127.0.0.1:${server.address().port}`;
 async function request(path,method='GET',body,session) {
   const response=await fetch(origin+path,{method,headers:{'Content-Type':'application/json',...(session?{Cookie:session}:{})},body:body?JSON.stringify(body):undefined});
-  return {status:response.status,data:await response.json(),cookie:response.headers.get('set-cookie')?.split(';')[0]};
+  return {status:response.status,data:response.status===204?null:await response.json(),cookie:response.headers.get('set-cookie')?.split(';')[0]};
 }
 test('accounts, persistence, isolation, validation and logout',async()=>{
   try {
     const a=await request('/api/auth/register','POST',{username:'alice',password:'correct horse battery staple'});
-    assert.equal(a.status,200);
+    assert.equal(a.status,201);
     assert.equal((await request('/api/profile','GET',null,a.cookie)).data.alarm.enabled,true);
     const changed=await request('/api/profile','PATCH',{displayName:'Alice Example',email:'alice@school.example',alarm:{enabled:true,sound:true,vibrate:false,desktop:true,reminderMinutes:10}},a.cookie);
     assert.equal(changed.status,200);
@@ -27,17 +27,17 @@ test('accounts, persistence, isolation, validation and logout',async()=>{
     assert.equal((await request('/api/profile','GET',null,a.cookie)).data.alarm.vibrate,false);
     assert.equal((await request('/api/profile','PATCH',{displayName:'Bad',email:'invalid',alarm:{}},a.cookie)).status,400);
     const proxied=await fetch(origin+'/api/auth/register',{method:'POST',headers:{'Content-Type':'application/json',Origin:'http://localhost:5173'},body:JSON.stringify({username:'via_proxy',password:'correct horse battery staple'})});
-    assert.equal(proxied.status,200);
+    assert.equal(proxied.status,201);
     const hostile=await fetch(origin+'/api/auth/register',{method:'POST',headers:{'Content-Type':'application/json',Origin:'https://unrelated.example'},body:JSON.stringify({username:'hostile',password:'correct horse battery staple'})});
     assert.equal(hostile.status,403);
     const b=await request('/api/auth/register','POST',{username:'bob',password:'another excellent password'});
-    assert.equal(b.status,200);
+    assert.equal(b.status,201);
     assert.equal((await request('/api/dashboard')).status,401);
-    const task=await request('/api/actions','POST',{type:'task.add',payload:{title:'Write report',focusMinutes:25}},a.cookie);
-    assert.equal(task.status,200);
-    const id=task.data.result.id;
-    const session=await request('/api/actions','POST',{type:'session.add',payload:{type:'study',title:'Read',date:'2026-09-30',startTime:'10:00',duration:25}},a.cookie);
-    assert.equal(session.status,200);
+    const task=await request('/api/tasks','POST',{title:'Write report',focusMinutes:25},a.cookie);
+    assert.equal(task.status,201);
+    const id=task.data.id;
+    const session=await request('/api/sessions','POST',{type:'study',title:'Read',date:'2026-09-30',startTime:'10:00',duration:25},a.cookie);
+    assert.equal(session.status,201);
     assert.equal((await request('/api/dashboard','GET',null,a.cookie)).data.tasks.length,2);
     assert.equal((await request('/api/dashboard','GET',null,b.cookie)).data.tasks.length,0);
     assert.equal((await request('/api/profile','GET',null,b.cookie)).data.displayName,'');
@@ -46,12 +46,12 @@ test('accounts, persistence, isolation, validation and logout',async()=>{
     assert.equal((await request('/api/alarms/due?day=2026-09-30&time=25:00','GET',null,a.cookie)).status,400);
     assert.equal((await request('/api/profile','PATCH',{displayName:'Alice Example',email:'alice@school.example',alarm:{enabled:false,sound:true,vibrate:false,desktop:true,reminderMinutes:10}},a.cookie)).status,200);
     assert.equal((await request('/api/alarms/due?day=2026-09-30&time=10:00','GET',null,a.cookie)).data.alarms.length,0);
-    assert.equal((await request('/api/actions','POST',{type:'session.add',payload:{type:'study',title:'Hijack',date:'2026-09-30',startTime:'11:00',duration:25,linkedItemId:id}},b.cookie)).status,404);
-    assert.equal((await request('/api/actions','POST',{type:'wellness.mood',payload:{mood:'🙂',day:'2026-09-30'}},a.cookie)).status,200);
-    assert.equal((await request('/api/dashboard?day=2026-09-30','GET',null,a.cookie)).data.wellness.mood,'🙂');
+    assert.equal((await request('/api/sessions','POST',{type:'study',title:'Hijack',date:'2026-09-30',startTime:'11:00',duration:25,linkedItemId:id},b.cookie)).status,404);
+    assert.equal((await request('/api/wellness/2026-09-30','PATCH',{mood:'good'},a.cookie)).status,200);
+    assert.equal((await request('/api/dashboard?day=2026-09-30','GET',null,a.cookie)).data.wellness.mood,'good');
     assert.equal((await request('/api/dashboard?day=2026-10-01','GET',null,a.cookie)).data.wellness.mood,'');
-    assert.equal((await request('/api/actions','POST',{type:'task.delete',payload:{id}},b.cookie)).status,404);
-    assert.equal((await request('/api/actions','POST',{type:'task.time',payload:{id,minutes:-2}},a.cookie)).status,400);
+    assert.equal((await request(`/api/tasks/${id}`,'DELETE',null,b.cookie)).status,404);
+    assert.equal((await request(`/api/tasks/${id}/progress`,'POST',{minutes:-2},a.cookie)).status,400);
     assert.equal((await request('/api/auth/login','POST',{username:'alice',password:'wrong password'})).status,401);
     const login=await request('/api/auth/login','POST',{username:'ALICE',password:'correct horse battery staple'});
     assert.equal(login.status,200);

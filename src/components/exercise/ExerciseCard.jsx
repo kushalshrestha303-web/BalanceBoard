@@ -1,4 +1,7 @@
+import { useState } from "react";
+import { createPortal } from "react-dom";
 import { useDashboard } from "../../context/DashboardContext";
+import AddExercise from "./AddExercise";
 
 function ExerciseCard({
   exercise,
@@ -8,6 +11,7 @@ function ExerciseCard({
     toggleExerciseComplete,
     deleteExercise,
   } = useDashboard();
+  const [editing, setEditing] = useState(false);
 
   const targetMinutes =
     Number(exercise.exerciseMinutes) || 30;
@@ -56,17 +60,28 @@ function ExerciseCard({
 
         </div>
 
-        <button
-          type="button"
-          className="activity-delete-button"
-          onClick={() =>
-            deleteExercise(exercise.id)
-          }
-          aria-label={`Delete ${exercise.title}`}
-          title="Delete exercise"
-        >
-          🗑️
-        </button>
+        <div className="activity-card-tools">
+          <button
+            type="button"
+            className="activity-delete-button"
+            onClick={() => setEditing(true)}
+            aria-label={`Edit ${exercise.title}`}
+            title="Edit exercise"
+          >
+            ✏️
+          </button>
+          <button
+            type="button"
+            className="activity-delete-button"
+            onClick={() =>
+              deleteExercise(exercise.id)
+            }
+            aria-label={`Delete ${exercise.title}`}
+            title="Delete exercise"
+          >
+            🗑️
+          </button>
+        </div>
 
       </div>
 
@@ -89,7 +104,7 @@ function ExerciseCard({
           </span>
 
           <strong>
-            {completedMinutes} / {targetMinutes} min
+            {Math.round(completedMinutes * 10) / 10} / {targetMinutes} min
           </strong>
 
         </div>
@@ -97,6 +112,7 @@ function ExerciseCard({
         <div
           className="activity-progress-track"
           role="progressbar"
+          aria-label={`Exercise progress for ${exercise.title}`}
           aria-valuemin="0"
           aria-valuemax={targetMinutes}
           aria-valuenow={completedMinutes}
@@ -114,6 +130,12 @@ function ExerciseCard({
           <span>
             {progress}% completed
           </span>
+
+          {exercise.steps > 0 && (
+            <span className="activity-steps" title="Counted by your phone's accelerometer">
+              👣 {exercise.steps.toLocaleString()} steps
+            </span>
+          )}
 
           {isCompleted && (
             <span className="activity-completed-label">
@@ -172,6 +194,8 @@ function ExerciseCard({
 
       </div>
 
+      {/* Rendered on <body> so the modal is not clipped by the card */}
+      {editing && createPortal(<AddExercise exercise={exercise} onClose={() => setEditing(false)} />, document.body)}
     </article>
   );
 }

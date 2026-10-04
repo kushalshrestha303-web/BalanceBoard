@@ -19,12 +19,13 @@ A full-stack productivity and wellbeing web app for managing study tasks, exerci
 
 ## Overview
 
-I built BalanceBoard to keep daily study and wellbeing activities in one place.
+We built BalanceBoard to keep daily study and wellbeing activities in one place.
 
 The app allows users to:
 
 - create an account and sign in
-- add study tasks and exercise activities
+- add, edit and delete study tasks and exercise activities
+- count steps with the phone's accelerometer during exercise sessions
 - schedule sessions in the calendar
 - run a focus or exercise timer
 - track mood and water intake
@@ -42,6 +43,7 @@ The application uses **React**, **Express**, and **SQLite**.
 - Google sign-in support
 - Study task management
 - Exercise tracking
+- Accelerometer step counting (sensor integration)
 - Persistent focus timer
 - Calendar scheduling
 - Mood tracking
@@ -208,7 +210,7 @@ User creates a study task
         ↓
 React form
         ↓
-POST /api/actions
+POST /api/tasks
         ↓
 Express backend
         ↓
@@ -320,6 +322,89 @@ The browser can play a ringtone, use vibration when supported and show desktop n
 
 ---
 
+# Sensor Integration: Accelerometer Step Counting
+
+Exercise is one of the four parts of the Balance Score, but timed minutes alone do not show how active a session was.
+While an **exercise** timer is running on a phone, BalanceBoard reads the accelerometer through the browser's
+`DeviceMotionEvent` API and counts steps.
+
+```mermaid
+flowchart LR
+    A[Phone accelerometer] -->|devicemotion ~60 Hz| B[useStepSensor hook]
+    B --> C[StepDetector<br/>gravity baseline + hysteresis]
+    C --> D[Live step count<br/>on the exercise timer]
+    B -->|on pause / save / page hide| E[POST /api/sensor-readings]
+    E --> F[(sensor_readings)]
+    F --> G[Exercise card total steps]
+    F --> H[Analytics: Movement this week]
+```
+
+- **Algorithm** (`src/services/stepDetector.js`): the acceleration magnitude is compared with a moving baseline
+  (gravity). A rise of more than 1.6 m/s² that falls back below 0.4 m/s² counts as one step, with at least
+  300 ms between steps. Unit tests simulate walking, running, a still phone and hand tremor.
+- **Permissions and fallbacks** (`src/hooks/useStepSensor.js`): iOS asks for motion permission from a button;
+  desktops and unsupported browsers show a clear message and the timer still works. Readings need HTTPS.
+- **Validation**: the API rejects step rates above 4 steps per second and readings for another user's exercise.
+
+---
+
+# Database Design
+
+All tables are in SQLite with foreign keys enforced (`PRAGMA foreign_keys=ON`).
+Every user-owned row carries `user_id`, and every query filters by it.
+
+```mermaid
+erDiagram
+    users ||--o| profiles : has
+    users ||--o| google_identities : "may sign in with"
+    users ||--o{ auth_sessions : "signed in as"
+    users ||--o{ activities : owns
+    users ||--o{ scheduled_sessions : plans
+    users ||--o{ wellness_logs : records
+    users ||--o{ activity_days : "active on"
+    users ||--o| focus_timers : runs
+    users ||--o{ sensor_readings : records
+    activities ||--o{ scheduled_sessions : "linked to (SET NULL)"
+    activities ||--o| focus_timers : "timed by (CASCADE)"
+    activities ||--o{ sensor_readings : "measured by (CASCADE)"
+    scheduled_sessions ||--o| focus_timers : "started from (SET NULL)"
+
+    users { int id PK
+            text username UK
+            text salt
+            text password_hash }
+    activities { int id PK
+                 int user_id FK
+                 text kind "task | exercise"
+                 text title
+                 int target_minutes
+                 real completed_minutes
+                 int completed }
+    scheduled_sessions { int id PK
+                         int user_id FK
+                         int activity_id FK
+                         text type "study | exercise"
+                         text day
+                         text start_time
+                         int duration_minutes }
+    wellness_logs { int user_id PK
+                    text day PK
+                    text mood
+                    int water_cups }
+    sensor_readings { int id PK
+                      int activity_id FK
+                      text sensor "accelerometer"
+                      text metric "steps"
+                      int value
+                      int duration_seconds }
+```
+
+CHECK constraints keep data valid even if a bug slips past the API (for example `water_cups BETWEEN 0 AND 8`,
+`mood IN ('great','good','okay','low','stressed','')`). Databases created by earlier versions, which stored
+records as JSON in one `items` table, are migrated automatically on start-up (`server/src/db.js`).
+
+---
+
 # Technology Stack
 
 | Area | Technology |
@@ -328,10 +413,11 @@ The browser can play a ringtone, use vibration when supported and show desktop n
 | Build Tool | Vite |
 | Backend | Node.js |
 | API | Express |
-| Database | SQLite |
+| Database | SQLite (Node's built-in `node:sqlite`) |
 | Authentication | Password login + Google OAuth |
 | Password Security | scrypt |
 | Sessions | HttpOnly cookie |
+| Sensor | DeviceMotion API (accelerometer) |
 | Source Control | Git + GitHub |
 
 ---
@@ -346,21 +432,27 @@ BalanceBoard/
 │   └── dev.js
 │
 ├── server/
-│   ├── data/
+│   ├── data/                  SQLite database (not committed)
 │   └── src/
-│       ├── server.js
-│       ├── googleAuth.js
-│       ├── timer.js
-│       ├── server.test.js
-│       └── timer.test.js
+│       ├── server.js          entry point
+│       ├── app.js             builds the Express app
+│       ├── config.js          environment settings
+│       ├── db.js              schema + legacy migration
+│       ├── googleAuth.js      Google ID-token verification
+│       ├── lib/               errors, validation, password hashing
+│       ├── middleware/        auth, security headers, rate limit, errors
+│       ├── models/            activities, sessions, activity days
+│       ├── routes/            auth, profile, tasks/exercises, sessions,
+│       │                      wellness, sensor-readings, timer, dashboard
+│       └── *.test.js          API, migration, timer and account tests
 │
 ├── src/
-│   ├── components/
-│   ├── context/
-│   │   └── TimerContext.jsx
-│   ├── pages/
-│   │   └── Profile.jsx
-│   └── ...
+│   ├── components/            layout, tasks, exercise, wellness, analytics
+│   ├── context/               Auth, Dashboard and Timer state
+│   ├── hooks/useStepSensor.js accelerometer integration
+│   ├── pages/                 Dashboard, Analytics, Calendar, Achievements, Profile, Login
+│   ├── services/              API client, alarms, step detector (+ test)
+│   └── styles/global.css
 │
 ├── .env.example
 ├── .gitignore
@@ -539,44 +631,43 @@ server/data/*.sqlite-*
 
 # API Overview
 
-### Authentication
+All endpoints return JSON. Everything except `/api/health` and `/api/auth/*` (apart from `me` and `logout`)
+needs the session cookie; requests for another user's records return **404**.
 
-```text
-POST /api/auth/register
-POST /api/auth/login
-POST /api/auth/logout
-GET  /api/auth/me
-GET  /api/auth/google
-GET  /api/auth/google/callback
-```
+| Method | Path | Purpose | Success |
+|---|---|---|---|
+| POST | `/api/auth/register` | Create account and sign in | 201 |
+| POST | `/api/auth/login` | Sign in | 200 |
+| POST | `/api/auth/logout` | Sign out | 200 |
+| GET | `/api/auth/me` | Current user | 200 |
+| GET | `/api/auth/google`, `/api/auth/google/callback` | Google sign-in | 302 / 303 |
+| GET / PATCH | `/api/profile` | Profile and alarm settings | 200 |
+| PATCH | `/api/profile/password` | Change password (signs out other devices) | 200 |
+| GET / POST | `/api/tasks` | List / create study tasks | 200 / 201 |
+| GET / PATCH / DELETE | `/api/tasks/:id` | Read / edit / delete a task | 200 / 200 / 204 |
+| POST | `/api/tasks/:id/progress` | Log focus minutes | 200 |
+| GET / POST | `/api/exercises` | List / create exercises | 200 / 201 |
+| GET / PATCH / DELETE | `/api/exercises/:id` | Read / edit / delete an exercise | 200 / 200 / 204 |
+| POST | `/api/exercises/:id/progress` | Log exercise minutes | 200 |
+| GET / POST | `/api/sessions` | List / schedule calendar sessions | 200 / 201 |
+| GET / PATCH / DELETE | `/api/sessions/:id` | Read / edit / delete a session | 200 / 200 / 204 |
+| GET / PATCH | `/api/wellness/:day` | Mood and water for a day | 200 |
+| GET / POST | `/api/sensor-readings` | Accelerometer step readings | 200 / 201 |
+| GET / PUT | `/api/timer` | Current timer / choose activity | 200 |
+| POST | `/api/timer/actions` | start, pause, reset, save, discard | 200 |
+| GET | `/api/dashboard?day=YYYY-MM-DD` | Everything the dashboard needs in one call | 200 |
+| GET | `/api/alarms/due?day=…&time=HH:mm` | Calendar sessions due now | 200 |
 
-### Profile
+Errors use `{ "error": "message" }` with 400 (invalid input), 401 (not signed in), 403 (cross-origin write),
+404 (not found or not yours), 409 (conflict), 413 (body over 32 KB) or 429 (too many login attempts).
 
-```text
-GET   /api/profile
-PATCH /api/profile
-PATCH /api/profile/password
-```
+Example:
 
-### Dashboard
+```http
+POST /api/tasks
+Content-Type: application/json
 
-```text
-GET  /api/dashboard?day=YYYY-MM-DD
-POST /api/actions
-```
-
-### Timer
-
-```text
-GET  /api/timer
-PUT  /api/timer
-POST /api/timer/actions
-```
-
-### Alarm
-
-```text
-GET /api/alarms/due?day=YYYY-MM-DD&time=HH:mm
+{ "title": "Finish React assignment", "category": "Assignment", "focusMinutes": 50 }
 ```
 
 ---
@@ -595,20 +686,15 @@ Run tests:
 npm test
 ```
 
-Tests cover important backend functions including:
+`npm test` runs 16 automated tests (Node's built-in test runner):
 
-- registration
-- login
-- logout
-- profile updates
-- password changes
-- account separation
-- alarms
-- Google authentication flow
-- timer persistence
-- pause and resume
-- timer recovery
-- progress saving
+| File | What it checks |
+|---|---|
+| `src/services/stepDetector.test.js` | Step counting accuracy (walking, running), no false steps when still, cadence limit |
+| `server/src/api.test.js` | CRUD for tasks, exercises, sessions, wellness and sensor readings; ownership (IDOR) on every endpoint; input validation; mass assignment; 413/400 handling; CSRF origin check; SQL injection on login; rate limiting |
+| `server/src/migration.test.js` | Upgrading an old JSON-based database without losing data |
+| `server/src/server.test.js` | Registration, login, logout, profile, password change, account separation, alarms, Google sign-in flow |
+| `server/src/timer.test.js` | Timer survives a server restart, pause/resume, stale tabs, no double-saving |
 
 ---
 
@@ -616,7 +702,7 @@ Tests cover important backend functions including:
 
 BalanceBoard uses **React** for the frontend, **Express** for the backend and **SQLite** for the database.
 
-When a user performs an action, React sends a request to Express. The backend checks the user's session, validates the information and then reads or updates SQLite. The result is returned to React and shown on the screen.
+When a user performs an action, React sends a REST request to Express. The backend checks the user's session, validates the information and then reads or updates SQLite. The result is returned to React and shown on the screen.
 
 The timer is also stored in the backend so it can continue across different pages and recover after a refresh.
 
@@ -626,9 +712,13 @@ The timer is also stored in the backend so it can continue across different page
 
 https://github.com/kushalshrestha303-web/BalanceBoard
 
-## Author
+## Team
 
-**Kushal Shrestha**
+ICT930 Advanced Web Application Development, Assessment 3:
+
+- Kushal Shrestha
+- Susmita Pantha
+- Dev Kaji Gurung
 
 <div align="center">
 

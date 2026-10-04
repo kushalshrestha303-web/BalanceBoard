@@ -1,5 +1,6 @@
 import Layout from "../components/layout/Layout";
 import { useDashboard } from "../context/DashboardContext";
+import MovementCard from "../components/analytics/MovementCard";
 
 function Analytics() {
   const {
@@ -972,6 +973,12 @@ function Analytics() {
           </article>
 
         </section>
+
+        {/* =====================
+            MOVEMENT (ACCELEROMETER)
+        ===================== */}
+
+        <MovementCard />
 
         {/* =====================
             ACTIVITY SUMMARY

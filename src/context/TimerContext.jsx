@@ -2,11 +2,12 @@ import { createContext, useCallback, useContext, useEffect, useRef, useState } f
 import { useAuth } from './AuthContext';
 import { useDashboard } from './DashboardContext';
 import { api, localDay } from '../services/api';
+import { useStepSensor } from '../hooks/useStepSensor';
 
 const TimerContext = createContext(null);
 export function TimerProvider({ children }) {
   const { user } = useAuth();
-  const { refresh } = useDashboard();
+  const { refresh, recordSteps } = useDashboard();
   const [snapshot, setSnapshot] = useState({ timer: null, offset: 0 });
   const [now, setNow] = useState(Date.now());
   const [error, setError] = useState('');
@@ -73,6 +74,8 @@ export function TimerProvider({ children }) {
   const status = timer && remainingMs === 0 ? 'finished' : timer?.status;
   const seconds = Math.ceil(remainingMs / 1000);
   const formatted = `${String(Math.floor(seconds / 60)).padStart(2, '0')}:${String(seconds % 60).padStart(2, '0')}`;
-  return <TimerContext.Provider value={{ timer, status, remainingMs, formatted, busy, loading, error, select, command, sync }}>{children}</TimerContext.Provider>;
+  // Accelerometer step counting runs alongside exercise timers (see hooks/useStepSensor.js).
+  const sensor = useStepSensor({ timer, timerStatus: status, saveReading: ({ exerciseId, steps, durationSeconds }) => recordSteps(exerciseId, steps, durationSeconds) });
+  return <TimerContext.Provider value={{ timer, status, remainingMs, formatted, busy, loading, error, select, command, sync, sensor }}>{children}</TimerContext.Provider>;
 }
 export const useTimer = () => useContext(TimerContext);
