@@ -8,15 +8,19 @@
     "build": "vite build",
     "preview": "vite preview",
     "start": "npm --prefix server start",
-    "test": "npm --prefix server test",
+    "test": "node --test \"src/**/*.test.js\" && npm --prefix server test",
     "web": "vite"
   },
   "dependencies": {
-    "@vitejs/plugin-react": "latest",
-    "react": "latest",
-    "react-dom": "latest",
-    "react-router-dom": "^7.18.3",
-    "recharts": "latest",
-    "vite": "latest"
+    "react": "^19.2.8",
+    "react-dom": "^19.2.8",
+    "react-router-dom": "^7.18.3"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-react": "^6.1.1",
+    "vite": "^8.2.2"
+  },
+  "engines": {
+    "node": ">=22.13.0"
   }
 }

@@ -1,14 +1,16 @@
 import { useState } from "react";
 import { useDashboard } from "../../context/DashboardContext";
 
-function AddTask({ onClose }) {
-  const { addTask } = useDashboard();
+// Used for both creating a task and editing an existing one (when `task` is passed).
+function AddTask({ onClose, task = null }) {
+  const { addTask, updateTask } = useDashboard();
+  const editing = Boolean(task);
 
   const [formData, setFormData] = useState({
-    title: "",
-    category: "Study",
-    description: "",
-    focusMinutes: 25,
+    title: task?.title ?? "",
+    category: task?.category ?? "Study",
+    description: task?.description ?? "",
+    focusMinutes: task?.focusMinutes ?? 25,
   });
 
   const [error, setError] = useState("");
@@ -52,11 +54,9 @@ function AddTask({ onClose }) {
 
     setSaving(true);
     try {
-    await addTask({
-      ...formData,
-      title,
-      focusMinutes,
-    });
+    const data = { ...formData, title, focusMinutes };
+    if (editing) await updateTask(task.id, data);
+    else await addTask(data);
 
     setError("");
 
@@ -79,11 +79,11 @@ function AddTask({ onClose }) {
           <div>
 
             <p className="page-eyebrow">
-              NEW TASK
+              {editing ? "EDIT TASK" : "NEW TASK"}
             </p>
 
             <h2 id="add-task-title">
-              Create a task
+              {editing ? "Edit task" : "Create a task"}
             </h2>
 
           </div>
@@ -138,6 +138,10 @@ function AddTask({ onClose }) {
               value={formData.category}
               onChange={handleChange}
             >
+
+              {editing && !["Study", "Learning", "Assignment", "Project", "Personal"].includes(task.category) && (
+                <option value={task.category}>{task.category}</option>
+              )}
 
               <option value="Study">
                 📚 Study
@@ -236,7 +240,7 @@ function AddTask({ onClose }) {
             disabled={saving}
               className="primary-button"
             >
-              Create Task
+              {editing ? "Save Changes" : "Create Task"}
             </button>
 
           </div>

@@ -39,12 +39,17 @@ export function DashboardProvider({ children }) {
     }).catch(e => { if(!cancelled) setError(e.message); }).finally(()=>{if(!cancelled) setLoading(false);});
     return () => {cancelled=true;};
   },[user?.id]);
+  // Latest wellness values, so queued water clicks build on each other rather than on stale state.
+  const wellnessRef = useRef(wellness);
+  wellnessRef.current = wellness;
+
   // Serialize mutations so rapid clicks cannot overwrite newer server state.
-  function action(type,payload={}) {
+  // request() returns the API call to make; the dashboard is reloaded afterwards.
+  function mutate(request) {
     const actor=user?.id;
     queue.current = queue.current.catch(()=>{}).then(async()=>{
       if(!actor || owner.current!==actor) throw new Error('Account changed. Please try again.');
-      await api('/actions',{method:'POST',body:JSON.stringify({type,payload,clientDay:localDay()})});
+      await request();
       if(owner.current!==actor) return;
       await refresh(); setError('');
     }).catch(e=>{if(owner.current===actor) setError(e.message); throw e;});
@@ -52,20 +57,31 @@ export function DashboardProvider({ children }) {
     queue.current.catch(()=>{});
     return queue.current;
   }
-  function addTask(data) { return action('task.add',data); }
-  function deleteTask(id) { return action('task.delete',{id}); }
-  function toggleTaskComplete(id) { return action('task.toggle',{id}); }
-  function addFocusTime(id,minutes) { return action('task.time',{id,minutes}); }
-  function addExercise(data) { return action('exercise.add',data); }
-  function deleteExercise(id) { return action('exercise.delete',{id}); }
-  function toggleExerciseComplete(id) { return action('exercise.toggle',{id}); }
-  function addExerciseTime(id,minutes) { return action('exercise.time',{id,minutes}); }
-  function updateMood(mood) { return action('wellness.mood',{mood,day:localDay()}); }
-  function addWater() { return action('wellness.water',{delta:1,day:localDay()}); }
-  function removeWater() { return action('wellness.water',{delta:-1,day:localDay()}); }
-  function addScheduledSession(data) { return action('session.add',data); }
-  function updateScheduledSession(id,data) { return action('session.update',{id,...data}); }
-  function deleteScheduledSession(id) { return action('session.delete',{id}); }
+  const send = (path, method, body) => () => api(path, { method, body: body === undefined ? undefined : JSON.stringify(body) });
+  const withDay = body => ({ ...body, clientDay: localDay() });
+
+  // Study tasks (REST: /api/tasks)
+  const addTask = data => mutate(send('/tasks', 'POST', data));
+  const updateTask = (id, data) => mutate(send(`/tasks/${id}`, 'PATCH', data));
+  const deleteTask = id => mutate(send(`/tasks/${id}`, 'DELETE'));
+  const toggleTaskComplete = id => mutate(send(`/tasks/${id}`, 'PATCH', withDay({ completed: !tasks.find(t => t.id === id)?.completed })));
+  const addFocusTime = (id, minutes) => mutate(send(`/tasks/${id}/progress`, 'POST', withDay({ minutes })));
+  // Exercises (REST: /api/exercises)
+  const addExercise = data => mutate(send('/exercises', 'POST', data));
+  const updateExercise = (id, data) => mutate(send(`/exercises/${id}`, 'PATCH', data));
+  const deleteExercise = id => mutate(send(`/exercises/${id}`, 'DELETE'));
+  const toggleExerciseComplete = id => mutate(send(`/exercises/${id}`, 'PATCH', withDay({ completed: !exercises.find(e => e.id === id)?.completed })));
+  const addExerciseTime = (id, minutes) => mutate(send(`/exercises/${id}/progress`, 'POST', withDay({ minutes })));
+  const recordSteps = (exerciseId, steps, durationSeconds) => mutate(send('/sensor-readings', 'POST', withDay({ exerciseId, steps, durationSeconds })));
+  // Daily wellness (REST: /api/wellness/:day)
+  const updateMood = mood => mutate(send(`/wellness/${localDay()}`, 'PATCH', { mood }));
+  const changeWater = delta => mutate(() => api(`/wellness/${localDay()}`, { method: 'PATCH', body: JSON.stringify({ water: Math.max(0, Math.min(8, (Number(wellnessRef.current.water) || 0) + delta)) }) }));
+  const addWater = () => changeWater(1);
+  const removeWater = () => changeWater(-1);
+  // Calendar sessions (REST: /api/sessions)
+  const addScheduledSession = data => mutate(send('/sessions', 'POST', withDay(data)));
+  const updateScheduledSession = (id, data) => mutate(send(`/sessions/${id}`, 'PATCH', withDay(data)));
+  const deleteScheduledSession = id => mutate(send(`/sessions/${id}`, 'DELETE'));
   // =========================
   // DASHBOARD STATISTICS
   // =========================
@@ -305,6 +321,8 @@ export function DashboardProvider({ children }) {
 
     addFocusTime,
 
+    updateTask,
+
     // Exercise functions
     addExercise,
 
@@ -313,6 +331,10 @@ export function DashboardProvider({ children }) {
     toggleExerciseComplete,
 
     addExerciseTime,
+
+    updateExercise,
+
+    recordSteps,
 
     // Wellness functions
     updateMood,

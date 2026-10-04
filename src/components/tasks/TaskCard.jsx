@@ -1,10 +1,14 @@
+import { useState } from "react";
+import { createPortal } from "react-dom";
 import { useDashboard } from "../../context/DashboardContext";
+import AddTask from "./AddTask";
 
 function TaskCard({ task, onStartFocus }) {
   const {
     toggleTaskComplete,
     deleteTask,
   } = useDashboard();
+  const [editing, setEditing] = useState(false);
 
   const targetMinutes =
     Number(task.focusMinutes) || 25;
@@ -44,15 +48,26 @@ function TaskCard({ task, onStartFocus }) {
           <h3>{task.title}</h3>
         </div>
 
-        <button
-          type="button"
-          className="activity-delete-button"
-          onClick={() => deleteTask(task.id)}
-          aria-label={`Delete ${task.title}`}
-          title="Delete task"
-        >
-          🗑️
-        </button>
+        <div className="activity-card-tools">
+          <button
+            type="button"
+            className="activity-delete-button"
+            onClick={() => setEditing(true)}
+            aria-label={`Edit ${task.title}`}
+            title="Edit task"
+          >
+            ✏️
+          </button>
+          <button
+            type="button"
+            className="activity-delete-button"
+            onClick={() => deleteTask(task.id)}
+            aria-label={`Delete ${task.title}`}
+            title="Delete task"
+          >
+            🗑️
+          </button>
+        </div>
       </div>
 
       {/* DESCRIPTION */}
@@ -71,13 +86,14 @@ function TaskCard({ task, onStartFocus }) {
           <span>Focus progress</span>
 
           <strong>
-            {completedMinutes} / {targetMinutes} min
+            {Math.round(completedMinutes * 10) / 10} / {targetMinutes} min
           </strong>
         </div>
 
         <div
           className="activity-progress-track"
           role="progressbar"
+          aria-label={`Focus progress for ${task.title}`}
           aria-valuemin="0"
           aria-valuemax={targetMinutes}
           aria-valuenow={completedMinutes}
@@ -149,6 +165,8 @@ function TaskCard({ task, onStartFocus }) {
 
       </div>
 
+      {/* Rendered on <body> so the modal is not clipped by the card */}
+      {editing && createPortal(<AddTask task={task} onClose={() => setEditing(false)} />, document.body)}
     </article>
   );
 }

@@ -29,8 +29,8 @@ test('timer survives server restart, pause/resume, stale tabs and duplicate save
     await boot();
     const a=await request('/api/auth/register','POST',{username:'timer_alice',password:'strong timer password'});
     const b=await request('/api/auth/register','POST',{username:'timer_bob',password:'strong timer password'});
-    const activity=await request('/api/actions','POST',{type:'task.add',payload:{title:'Persistent focus',focusMinutes:1}},a.cookie);
-    const itemId=activity.data.result.id;
+    const activity=await request('/api/tasks','POST',{title:'Persistent focus',focusMinutes:1},a.cookie);
+    const itemId=activity.data.id;
     assert.equal((await request('/api/timer','PUT',{kind:'task',itemId},b.cookie)).status,404);
     let current=(await request('/api/timer','PUT',{kind:'task',itemId},a.cookie)).data.timer;
     async function act(action,timer=current) {return request('/api/timer/actions','POST',{action,timerId:timer.id,revision:timer.revision,clientDay:'2026-09-26'},a.cookie);}
