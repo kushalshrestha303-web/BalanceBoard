@@ -1,13 +1,4 @@
-<div align="center">
 
-```text
-● ● ● ● ● ● ● ● ● ● ● ● ● ● ●
-●                             ●
-●       BALANCEBOARD          ●
-●   Study • Focus • Wellbeing ●
-●                             ●
-● ● ● ● ● ● ● ● ● ● ● ● ● ● ●
-```
 
 # BalanceBoard
 
